@@ -3,18 +3,15 @@
 Version simple pour démarrer. L'équipe pourra ajouter plus de méthodes.
 """
 
-from typing import Dict, Any
+from typing import Any, Dict
+
 import pandas as pd
 
 
 class DataAnalyzer:
     """Classe pour analyser les données de recettes et interactions."""
 
-    def __init__(
-        self,
-        recipes: pd.DataFrame,
-        interactions: pd.DataFrame
-    ) -> None:
+    def __init__(self, recipes: pd.DataFrame, interactions: pd.DataFrame) -> None:
         """Initialise l'analyseur avec les données."""
         self.recipes = recipes
         self.interactions = interactions
@@ -22,9 +19,11 @@ class DataAnalyzer:
     def get_basic_stats(self) -> Dict[str, Any]:
         """Retourne des statistiques de base sur les données."""
         stats = {
-            'total_recipes': len(self.recipes),
-            'total_interactions': len(self.interactions),
-            'total_users': self.interactions['user_id'].nunique() if 'user_id' in self.interactions.columns else 0,
+            "total_recipes": len(self.recipes),
+            "total_interactions": len(self.interactions),
+            "total_users": self.interactions["user_id"].nunique()
+            if "user_id" in self.interactions.columns
+            else 0,
         }
         return stats
 
@@ -32,20 +31,20 @@ class DataAnalyzer:
         """Retourne les N recettes avec le plus d'interactions."""
         if self.interactions.empty:
             return pd.DataFrame()
-        
-        recipe_counts = self.interactions['recipe_id'].value_counts().head(n)
-        top_recipes = self.recipes[self.recipes['id'].isin(recipe_counts.index)]
+
+        recipe_counts = self.interactions["recipe_id"].value_counts().head(n)
+        top_recipes = self.recipes[self.recipes["id"].isin(recipe_counts.index)]
         return top_recipes
 
     def get_average_rating(self) -> float:
         """Calcule la note moyenne de toutes les recettes."""
-        if 'rating' not in self.interactions.columns:
+        if "rating" not in self.interactions.columns:
             return 0.0
-        
-        valid_ratings = self.interactions[self.interactions['rating'] > 0]['rating']
+
+        valid_ratings = self.interactions[self.interactions["rating"] > 0]["rating"]
         if len(valid_ratings) == 0:
             return 0.0
-        
+
         return float(valid_ratings.mean())
 
 

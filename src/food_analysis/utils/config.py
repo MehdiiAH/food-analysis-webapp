@@ -11,7 +11,7 @@ Exemple de structure :
         APP_NAME: str
         DATA_RAW_PATH: Path
         LOGS_PATH: Path
-        
+
         @classmethod
         def create_directories(cls) -> None:
             ...
