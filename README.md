@@ -24,7 +24,7 @@ Ce projet est une application web d'analyse de données développée avec Stream
 
 ```bash
 # Cloner le dépôt
-git clone https://github.com/VOTRE-USERNAME/food-analysis-webapp.git
+git clone https://github.com/MehdiiAH/food-analysis-webapp.git
 cd food-analysis-webapp
 
 # Créer l'environnement virtuel et installer les dépendances

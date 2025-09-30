@@ -3,8 +3,6 @@
 Ce fichier montre comment écrire des tests avec pytest.
 """
 
-import pytest
-
 
 def test_example_always_passes() -> None:
     """Test d'exemple qui passe toujours."""
@@ -15,7 +13,7 @@ def test_example_with_fixture(tmp_path):
     """Test d'exemple utilisant une fixture pytest."""
     test_file = tmp_path / "test.txt"
     test_file.write_text("Hello World")
-    
+
     assert test_file.read_text() == "Hello World"
 
 
@@ -27,9 +25,11 @@ def test_example_with_fixture(tmp_path):
 
 class TestDataLoader:
     """Tests pour la classe DataLoader."""
+
     pass
 
 
 class TestDataAnalyzer:
     """Tests pour la classe DataAnalyzer."""
+
     pass
