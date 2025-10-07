@@ -96,7 +96,8 @@ def plot_rating_distribution(interaction_df: pd.DataFrame, recipe_id: int) -> No
     plt.ylabel("Nombre d'avis")
     # plt.xticks([])
     plt.show()
-    
+
+
 def recipe_reviews(recipe_id: int, interaction_df: pd.DataFrame) -> pd.DataFrame:
     """
     Récupère les avis pour une recette donnée.
