@@ -19,13 +19,13 @@ RUN pip install --no-cache-dir --upgrade pip
 RUN pip install --no-cache-dir uv
 
 # Copier les fichiers de configuration
-COPY pyproject.toml README.md ./
+COPY pyproject.toml ./
 
 # Copier le code source
 COPY src/ ./src/
 
-# Copier les données (si vous utilisez l'échantillon)
-COPY data/ ./data/
+# Copier les données
+COPY data/ ./data/ 2>/dev/null || true
 
 # Installer les dépendances via uv
 RUN uv pip install --system -e .
