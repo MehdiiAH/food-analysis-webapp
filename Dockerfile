@@ -18,11 +18,11 @@ COPY src /app/src/
 
 # Installer les dépendances via uv
 RUN uv pip install --system --no-cache .
-RUN uv pip install --system "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.1/en_core_web_sm-3.7.1-py3-none-any.whl"
-
 
 # Télécharger modèle spaCy
-RUN python -m spacy download en_core_web_sm
+# ne PAS utiliser RUN python -m spacy download en_core_web_sm
+RUN uv pip install --system "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.1/en_core_web_sm-3.7.1-py3-none-any.whl"
+
 
 # Exposer le port par défaut Streamlit
 EXPOSE 8501
