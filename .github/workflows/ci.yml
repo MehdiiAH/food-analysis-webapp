@@ -90,6 +90,9 @@ jobs:
     needs: test # optionnel : dépend des tests Python existants
 
     steps:
+      - name: List repo files
+        run: ls -R $GITHUB_WORKSPACE
+
       - name: Check working directory and files
         run: |
           pwd
