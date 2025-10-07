@@ -90,8 +90,11 @@ jobs:
     needs: test # optionnel : dépend des tests Python existants
 
     steps:
-      - name: Check Dockerfile location
-        run: ls -l
+      - name: Check working directory and files
+        run: |
+          pwd
+          ls -l
+          ls -l src/food_analysis
 
       # 1️⃣ Récupérer le code
       - uses: actions/checkout@v3
