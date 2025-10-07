@@ -45,7 +45,9 @@ class DataAnalyzer:
 
     #     return float(valid_ratings.mean())
 
-    def plot_rating_distribution(interaction_df: pd.DataFrame, recipe_id: int) -> None:
+    def plot_rating_distribution(
+        self, interaction_df: pd.DataFrame, recipe_id: int
+    ) -> None:
         """
         Affiche la distribution des notes pour une recette spécifique.
         """
