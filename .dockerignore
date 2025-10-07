@@ -1,0 +1,55 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Tests
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Documentation
+docs/_build/
+docs/build/
+
+# Logs
+logs/
+*.log
+
+# Environment
+.env
+.env.*
+
+# CI/CD
+.github/
+
+# Data (si trop gros)
+# data/raw/RAW_recipes.csv
+# data/raw/RAW_interactions.csv
+
+# Misc
+.DS_Store
+Thumbs.db
+README.md
