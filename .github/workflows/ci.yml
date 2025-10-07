@@ -90,6 +90,9 @@ jobs:
     needs: test # optionnel : dépend des tests Python existants
 
     steps:
+      # 1️⃣ Récupérer le code
+      - uses: actions/checkout@v4
+
       - name: List repo files
         run: ls -R $GITHUB_WORKSPACE
 
@@ -98,9 +101,6 @@ jobs:
           pwd
           ls -l
           ls -l src/food_analysis
-
-      # 1️⃣ Récupérer le code
-      - uses: actions/checkout@v3
 
       # 2️⃣ Configurer Docker (déjà installé sur ubuntu-latest)
       - name: Set up Docker Buildx
