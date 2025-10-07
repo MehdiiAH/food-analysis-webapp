@@ -1,48 +1,129 @@
-"""Main Streamlit application.
-
-Ce fichier est le point d'entrée de l'application Streamlit.
-À développer par l'équipe.
-"""
-
 import streamlit as st
+from food_analysis.core.data_loader import DataLoader
+from food_analysis.pages.recipe_ratings import show_recipe_ratings_page
 
 
 def main() -> None:
     """Point d'entrée principal de l'application."""
+    # Configuration de la page
     st.set_page_config(
         page_title="Food Analysis WebApp",
         page_icon="🍳",
         layout="wide",
-        initial_sidebar_state="expanded",
+        initial_sidebar_state="expanded"
     )
 
+    # Titre principal
     st.title("🍳 Food.com - Analyse de Données")
     st.markdown("**Version:** 0.1.0")
     st.markdown("---")
 
-    st.success("✅ L'application est prête ! Vous pouvez commencer à développer.")
+    # === CHARGEMENT DES DONNÉES ===
+    @st.cache_data  # Cache pour ne charger qu'une seule fois
+    def load_data():
+        """Charge les données depuis les CSV."""
+        loader = DataLoader()
+        recipes = loader.load_recipes()
+        interactions = loader.load_interactions()
+        return recipes, interactions
 
-    st.info("""
-    ### 👨‍💻 À Développer
+    try:
+        with st.spinner("Chargement des données..."):
+            recipes_df, interactions_df = load_data()
+        
+        # === SIDEBAR : NAVIGATION ===
+        with st.sidebar:
+            st.header("🧭 Navigation")
+            
+            page = st.radio(
+                "Sélectionnez une page :",
+                ["🏠 Accueil", "🏆 Recettes les Mieux Notées", "ℹ️ À propos"],
+                index=0
+            )
+            
+            st.markdown("---")
+            st.markdown("### 📊 Informations")
+            st.metric("Nombre de recettes", f"{len(recipes_df):,}")
+            st.metric("Nombre d'interactions", f"{len(interactions_df):,}")
+        
+        # === ROUTING DES PAGES ===
+        if page == "🏠 Accueil":
+            show_home_page(recipes_df, interactions_df)
+        
+        elif page == "🏆 Recettes les Mieux Notées":
+            show_recipe_ratings_page(recipes_df, interactions_df)
+        
+        else:  # À propos
+            show_about_page()
+    
+    except FileNotFoundError as e:
+        st.error(f"""
+        ❌ **Erreur : Fichiers de données non trouvés**
+        
+        {str(e)}
+        
+        Veuillez télécharger les données depuis Kaggle et les placer dans `data/raw/`:
+        - RAW_recipes.csv
+        - RAW_interactions.csv
+        
+        [Télécharger les données](https://www.kaggle.com/datasets/shuyangli94/food-com-recipes-and-user-interactions)
+        """)
+    
+    except Exception as e:
+        st.error(f"❌ Une erreur est survenue : {str(e)}")
+        st.exception(e)
 
-    Cette application est un squelette de base. Voici ce que vous devez faire :
 
-    1. **Configuration** : Compléter `src/food_analysis/utils/config.py` et `logger.py`
-    2. **Chargement des données** : Implémenter `src/food_analysis/core/data_loader.py`
-    3. **Analyse** : Créer `src/food_analysis/core/analyzer.py`
-    4. **Pages** : Développer les pages dans `src/food_analysis/pages/`
-    5. **Tests** : Écrire des tests dans `tests/`
-
-    📚 Consultez le README.md pour plus d'informations !
+def show_home_page(recipes_df, interactions_df) -> None:
+    """Affiche la page d'accueil."""
+    st.header("Bienvenue sur l'application d'analyse Food.com")
+    
+    st.markdown("""
+    ### 🎯 Objectif du projet
+    
+    Cette application permet d'explorer et d'analyser les données de recettes 
+    et d'interactions utilisateurs provenant de Food.com.
+    
+    ### 📊 Fonctionnalités
+    
+    - **🏆 Recettes les Mieux Notées** : Découvrez les recettes les plus populaires avec un système de notation pondérée
+    
+    ### 🚀 Comment utiliser
+    
+    Utilisez le menu de navigation à gauche pour explorer les différentes sections.
     """)
+    
+    # Quelques statistiques rapides
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        avg_rating = interactions_df[interactions_df["rating"] > 0]["rating"].mean()
+        st.metric("📊 Note Moyenne Globale", f"{avg_rating:.2f}/5")
+    
+    with col2:
+        unique_users = interactions_df["user_id"].nunique()
+        st.metric("👥 Utilisateurs Actifs", f"{unique_users:,}")
 
-    with st.sidebar:
-        st.header("🧭 Navigation")
-        st.info("Le menu de navigation sera développé ici")
 
-        st.markdown("---")
-        st.markdown("### 📊 Dataset")
-        st.markdown("Food.com Recipes & Interactions")
+def show_about_page() -> None:
+    """Affiche la page À propos."""
+    st.header("ℹ️ À propos")
+    
+    st.markdown("""
+    ### 📚 À propos du projet
+    
+    Ce projet a été développé dans le cadre d'un cours sur le développement 
+    Python pour la production.
+    
+    ### 🔗 Ressources
+    
+    - [Dataset Kaggle](https://www.kaggle.com/datasets/shuyangli94/food-com-recipes-and-user-interactions)
+    - [Documentation](https://github.com/MehdiiAH/food-analysis-webapp)
+    
+    ### 👥 Équipe
+    
+    Projet développé en équipe.
+    """)
 
 
 if __name__ == "__main__":
