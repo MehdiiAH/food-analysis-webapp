@@ -24,14 +24,11 @@ COPY pyproject.toml ./
 # Copier le code source
 COPY src/ ./src/
 
-# Copier les données
-COPY data/ ./data/ 2>/dev/null || true
+# Créer les dossiers nécessaires avant l'installation
+RUN mkdir -p logs data/raw data/processed
 
 # Installer les dépendances via uv
 RUN uv pip install --system -e .
-
-# Créer les dossiers nécessaires
-RUN mkdir -p logs data/raw data/processed
 
 # Exposer le port Streamlit
 EXPOSE 8501
