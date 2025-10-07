@@ -1,25 +1,26 @@
-"""Data loading and preprocessing module.
+from pathlib import Path
+import pandas as pd
 
-Ce module doit gérer le chargement des données Food.com.
 
-Classe principale : DataLoader
-- Charger RAW_recipes.csv
-- Charger RAW_interactions.csv
-- Gérer les erreurs (fichier non trouvé, etc.)
-- Fournir des méthodes pour accéder aux données
-- Logger les opérations
+class DataLoader:
+    """Charge les données Food.com."""
 
-Exemple d'utilisation :
-    loader = DataLoader()
-    recipes = loader.load_recipes()
-    interactions = loader.load_interactions()
+    def __init__(self, data_path: Path = None) -> None:
+        """Initialise le loader."""
+        if data_path is None:
+            data_path = Path("data/raw")
+        self.data_path = data_path
 
-À DÉVELOPPER PAR L'ÉQUIPE
-"""
+    def load_recipes(self) -> pd.DataFrame:
+        """Charge les recettes."""
+        file_path = self.data_path / "RAW_recipes.csv"
+        if not file_path.exists():
+            raise FileNotFoundError(f"Fichier non trouvé : {file_path}")
+        return pd.read_csv(file_path)
 
-# TODO: Créer la classe DataLoader
-# TODO: Méthode load_recipes() -> pd.DataFrame
-# TODO: Méthode load_interactions() -> pd.DataFrame
-# TODO: Gérer les exceptions (FileNotFoundError, etc.)
-# TODO: Ajouter du logging
-# TODO: Ajouter des docstrings et type hints
+    def load_interactions(self) -> pd.DataFrame:
+        """Charge les interactions."""
+        file_path = self.data_path / "RAW_interactions.csv"
+        if not file_path.exists():
+            raise FileNotFoundError(f"Fichier non trouvé : {file_path}")
+        return pd.read_csv(file_path)
