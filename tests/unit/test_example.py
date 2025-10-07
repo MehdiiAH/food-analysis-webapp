@@ -6,7 +6,7 @@ Ce fichier montre comment écrire des tests avec pytest.
 
 def test_example_always_passes() -> None:
     """Test d'exemple qui passe toujours."""
-    assert 1 + 1 == 2
+    assert 1 + 3 == 4
 
 
 def test_example_with_fixture(tmp_path):
