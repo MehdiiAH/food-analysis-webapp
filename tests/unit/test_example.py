@@ -8,6 +8,7 @@ def test_example_always_passes() -> None:
     """Test d'exemple qui passe toujours."""
     assert 1 + 1 == 2
 
+
 def test_example_always_passes_test_remi() -> None:
     """Test d'exemple qui passe toujours."""
     assert 1 + 5 == 6
