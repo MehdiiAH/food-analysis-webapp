@@ -17,7 +17,7 @@ COPY pyproject.toml /app/
 COPY src /app/src/
 
 # Installer les dépendances via uv
-RUN uv install
+RUN uv pip install --system --no-cache .
 
 # Télécharger modèle spaCy
 RUN python -m spacy download en_core_web_sm
