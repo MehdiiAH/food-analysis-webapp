@@ -44,16 +44,28 @@ import pandas as pd
 # Fonctions pour charger les données
 
 
-def load_recipes(path="recipe/RAW_recipes.csv"):
+def load_recipes(path: str = "recipe/RAW_recipes.csv") -> pd.DataFrame:
     """
     Charge les recettes depuis un fichier CSV.
+
+    Args:
+        path (str): chemin vers le fichier CSV
+
+    Returns:
+        pd.DataFrame: DataFrame contenant les recettes
     """
     return pd.read_csv(path)
 
 
-def load_interactions(path="interaction/RAW_interactions.csv"):
+def load_interactions(path: str = "interaction/RAW_interactions.csv") -> pd.DataFrame:
     """
     Charge les interactions (avis) depuis un fichier CSV.
+
+    Args:
+        path (str): chemin vers le fichier CSV
+
+    Returns:
+        pd.DataFrame: DataFrame contenant les interactions
     """
     return pd.read_csv(path)
 
@@ -61,7 +73,9 @@ def load_interactions(path="interaction/RAW_interactions.csv"):
 # Fonction pour calculer les statistiques des recettes
 
 
-def compute_recipe_stats(recipe_df, interaction_df, m=10):
+def compute_recipe_stats(
+    recipe_df: pd.DataFrame, interaction_df: pd.DataFrame, m: int = 10
+) -> pd.DataFrame:
     """
     Calcule la note moyenne, le nombre d'avis et la note pondérée pour chaque recette.
 
