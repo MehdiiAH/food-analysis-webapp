@@ -121,12 +121,17 @@ def compute_recipe_stats(
     ]
 
 
-# # Exemple d'utilisation
-# if __name__ == "__main__":
-#     from data_loader import load_recipes, load_interactions
+def plot_rating_distribution(interaction_df: pd.DataFrame, recipe_id: int) -> None:
+    """
+    Affiche la distribution des notes pour une recette spécifique.
+    """
+    import matplotlib.pyplot as plt
 
-#     recipes = load_recipes()
-#     interactions = load_interactions()
-
-#     top_recipes = compute_recipe_stats(recipes, interactions)
-#     print(top_recipes.head(10))
+    ratings = interaction_df.loc[interaction_df["recipe_id"] == recipe_id, "rating"]
+    plt.hist(ratings, bins=6, edgecolor="black")
+    plt.xlim(-0.25, None)
+    plt.title(f"Distribution des notes pour la recette {recipe_id}")
+    plt.xlabel("Note")
+    plt.ylabel("Nombre d'avis")
+    # plt.xticks([])
+    plt.show()
