@@ -1,25 +1,49 @@
-"""Data loading and preprocessing module.
+from pathlib import Path
+from typing import Optional
 
-Ce module doit gérer le chargement des données Food.com.
+import pandas as pd
 
-Classe principale : DataLoader
-- Charger RAW_recipes.csv
-- Charger RAW_interactions.csv
-- Gérer les erreurs (fichier non trouvé, etc.)
-- Fournir des méthodes pour accéder aux données
-- Logger les opérations
 
-Exemple d'utilisation :
-    loader = DataLoader()
-    recipes = loader.load_recipes()
-    interactions = loader.load_interactions()
+class DataLoader:
+    """Charge les données Food.com."""
 
-À DÉVELOPPER PAR L'ÉQUIPE
-"""
+    def __init__(self, data_path: Optional[Path] = None) -> None:
+        """
+        Initialise le loader.
 
-# TODO: Créer la classe DataLoader
-# TODO: Méthode load_recipes() -> pd.DataFrame
-# TODO: Méthode load_interactions() -> pd.DataFrame
-# TODO: Gérer les exceptions (FileNotFoundError, etc.)
-# TODO: Ajouter du logging
-# TODO: Ajouter des docstrings et type hints
+        Args:
+            data_path: Chemin vers le dossier des données (optionnel)
+        """
+        if data_path is None:
+            data_path = Path("data/raw")
+        self.data_path = data_path
+
+    def load_recipes(self) -> pd.DataFrame:
+        """
+        Charge les recettes.
+
+        Returns:
+            DataFrame contenant les recettes
+
+        Raises:
+            FileNotFoundError: Si le fichier n'existe pas
+        """
+        file_path = self.data_path / "RAW_recipes.csv"
+        if not file_path.exists():
+            raise FileNotFoundError(f"Fichier non trouvé : {file_path}")
+        return pd.read_csv(file_path)
+
+    def load_interactions(self) -> pd.DataFrame:
+        """
+        Charge les interactions.
+
+        Returns:
+            DataFrame contenant les interactions
+
+        Raises:
+            FileNotFoundError: Si le fichier n'existe pas
+        """
+        file_path = self.data_path / "RAW_interactions.csv"
+        if not file_path.exists():
+            raise FileNotFoundError(f"Fichier non trouvé : {file_path}")
+        return pd.read_csv(file_path)
