@@ -1,6 +1,7 @@
 # mypy: disable-error-code="attr-defined"
 
 import pandas as pd
+import plotly.express as px  # type: ignore[import-untyped]
 import streamlit as st
 
 # Import temporaire (à changer quand les fonctions seront dans analyzer)
@@ -280,6 +281,29 @@ def show_recipe_details(
             st.info(
                 f"📊 Affichage de **{len(filtered_reviews)}** avis sur **{len(reviews)}** au total"
             )
+
+            # === GRAPHIQUE : Distribution des notes ===
+            with st.expander(
+                "📊 Distribution des Notes pour cette Recette", expanded=False
+            ):
+                rating_counts = (
+                    reviews["rating"].value_counts().sort_index(ascending=False)
+                )
+
+                fig = px.bar(
+                    x=rating_counts.values,
+                    y=[
+                        f"⭐ {r}" if r > 0 else "❌ Sans note"
+                        for r in rating_counts.index
+                    ],
+                    orientation="h",
+                    labels={"x": "Nombre d'Avis", "y": "Note"},
+                    title="Distribution des Notes",
+                    color=rating_counts.values,
+                    color_continuous_scale="YlOrRd",
+                )
+                fig.update_layout(showlegend=False, height=300)
+                st.plotly_chart(fig, use_container_width=True)
 
             # Afficher les avis
             for _idx, review in filtered_reviews.iterrows():
