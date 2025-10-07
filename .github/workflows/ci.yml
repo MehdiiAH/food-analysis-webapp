@@ -90,6 +90,9 @@ jobs:
     needs: test # optionnel : dépend des tests Python existants
 
     steps:
+      - name: Check Dockerfile location
+        run: ls -l
+
       # 1️⃣ Récupérer le code
       - uses: actions/checkout@v3
 
