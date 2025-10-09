@@ -47,7 +47,7 @@ jobs:
       - name: Test with pytest
         run: |
           source .venv/bin/activate
-          pytest --cov=src/food_analysis --cov-branch --cov-report=xml
+          pytest --cov=src/food_analysis --cov-report=xml:coverage.xml --cov-report=term
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
