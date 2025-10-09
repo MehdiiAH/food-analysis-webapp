@@ -1,4 +1,5 @@
 # tests/test_recipe_ratings_page.py
+from typing import Tuple
 from unittest.mock import MagicMock, patch
 
 import pandas as pd
@@ -10,8 +11,10 @@ from food_analysis.pages.recipe_ratings_page import (
 )
 
 
+# === FIXTURE ===
 @pytest.fixture
-def sample_data() -> None:
+def sample_data() -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """Fixture renvoyant deux DataFrames simulés (recettes et interactions)."""
     recipe_df = pd.DataFrame(
         {
             "id": [1, 2],
@@ -19,6 +22,7 @@ def sample_data() -> None:
             "minutes": [30, 75],
         }
     )
+
     interaction_df = pd.DataFrame(
         {
             "recipe_id": [1, 1, 2, 2],
@@ -27,17 +31,22 @@ def sample_data() -> None:
             "date": ["2023-01-01", "2023-02-01", "2023-03-01", "2023-04-01"],
         }
     )
+
     return recipe_df, interaction_df
 
 
+# === TEST : show_recipe_ratings_page ===
 @patch("food_analysis.pages.recipe_ratings_page.st", autospec=True)
-@patch("food_analysis.pages.recipe_ratings_page.compute_recipe_stats")
+@patch("food_analysis.pages.recipe_ratings_page.compute_recipe_stats", autospec=True)
 def test_show_recipe_ratings_page_runs(
-    mock_compute_stats, mock_st, sample_data
+    mock_compute_stats: MagicMock,
+    mock_st: MagicMock,
+    sample_data: Tuple[pd.DataFrame, pd.DataFrame],
 ) -> None:
+    """Teste que show_recipe_ratings_page s'exécute sans erreur."""
     recipe_df, interaction_df = sample_data
 
-    # Mock le résultat de compute_recipe_stats
+    # Mock du résultat de compute_recipe_stats
     mock_compute_stats.return_value = pd.DataFrame(
         {
             "name": ["Pasta", "Pizza"],
@@ -47,7 +56,7 @@ def test_show_recipe_ratings_page_runs(
         }
     )
 
-    # Mock des composants Streamlit
+    # Mock Streamlit
     mock_st.slider.side_effect = [10, 2]  # m et n_recipes
     mock_st.columns.return_value = [MagicMock(), MagicMock(), MagicMock(), MagicMock()]
     mock_st.dataframe.return_value = MagicMock(selection=MagicMock(rows=[0]))
@@ -55,24 +64,30 @@ def test_show_recipe_ratings_page_runs(
     # Exécute la fonction
     show_recipe_ratings_page(recipe_df, interaction_df)
 
-    # ✅ Vérifie que compute_recipe_stats a été appelé
+    # Vérifie que compute_recipe_stats a été appelé correctement
     mock_compute_stats.assert_called_once_with(recipe_df, interaction_df, m=10)
 
-    # ✅ Vérifie que le header et le tableau ont été affichés
+    # Vérifie que header et tableau ont été affichés
     mock_st.header.assert_called_with("🏆 Recettes les Mieux Notées")
     mock_st.dataframe.assert_called()
 
 
+# === TEST : show_recipe_details ===
 @patch("food_analysis.pages.recipe_ratings_page.st", autospec=True)
-@patch("food_analysis.pages.recipe_ratings_page.recipe_reviews")
-def test_show_recipe_details(mock_reviews, mock_st, sample_data) -> None:
+@patch("food_analysis.pages.recipe_ratings_page.recipe_reviews", autospec=True)
+def test_show_recipe_details(
+    mock_reviews: MagicMock,
+    mock_st: MagicMock,
+    sample_data: Tuple[pd.DataFrame, pd.DataFrame],
+) -> None:
+    """Teste que show_recipe_details s'exécute sans erreur."""
     recipe_df, interaction_df = sample_data
 
     recipe_stats = pd.Series(
         {"weighted_rating": 4.5, "avg_rating": 4.0, "n_reviews": 15}
     )
 
-    # Mock les avis
+    # Mock des avis
     mock_reviews.return_value = pd.DataFrame(
         {
             "rating": [5, 4, 0],
@@ -81,7 +96,7 @@ def test_show_recipe_details(mock_reviews, mock_st, sample_data) -> None:
         }
     )
 
-    # Mock des fonctions Streamlit utilisées
+    # Mock des fonctions Streamlit
     mock_st.columns.return_value = [MagicMock(), MagicMock(), MagicMock(), MagicMock()]
     mock_st.metric.return_value = None
     mock_st.multiselect.return_value = [5, 4, 0]
@@ -98,8 +113,8 @@ def test_show_recipe_details(mock_reviews, mock_st, sample_data) -> None:
         interaction_df=interaction_df,
     )
 
-    # ✅ Vérifie que recipe_reviews a été appelé
+    # Vérifie que recipe_reviews a été appelé
     mock_reviews.assert_called_once_with(1, interaction_df)
 
-    # ✅ Vérifie qu’au moins une métrique est affichée
+    # Vérifie qu’au moins une métrique est affichée
     assert mock_st.metric.call_count >= 3
