@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import pandas as pd
 
 # Fonctions pour charger les données
@@ -86,7 +87,6 @@ def plot_rating_distribution(interaction_df: pd.DataFrame, recipe_id: int) -> No
     """
     Affiche la distribution des notes pour une recette spécifique.
     """
-    import matplotlib.pyplot as plt
 
     ratings = interaction_df.loc[interaction_df["recipe_id"] == recipe_id, "rating"]
     plt.hist(ratings, bins=6, edgecolor="black")
