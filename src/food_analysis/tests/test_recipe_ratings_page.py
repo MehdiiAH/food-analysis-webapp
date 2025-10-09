@@ -3,6 +3,7 @@ from unittest.mock import MagicMock, patch
 
 import pandas as pd
 import pytest
+
 from food_analysis.pages.recipe_ratings_page import (
     show_recipe_details,
     show_recipe_ratings_page,
