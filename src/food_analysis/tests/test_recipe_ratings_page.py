@@ -10,7 +10,7 @@ from food_analysis.pages.recipe_ratings_page import (
 
 
 @pytest.fixture
-def sample_data():
+def sample_data() -> None:
     recipe_df = pd.DataFrame(
         {
             "id": [1, 2],
@@ -31,7 +31,9 @@ def sample_data():
 
 @patch("food_analysis.pages.recipe_ratings_page.st", autospec=True)
 @patch("food_analysis.pages.recipe_ratings_page.compute_recipe_stats")
-def test_show_recipe_ratings_page_runs(mock_compute_stats, mock_st, sample_data):
+def test_show_recipe_ratings_page_runs(
+    mock_compute_stats, mock_st, sample_data
+) -> None:
     recipe_df, interaction_df = sample_data
 
     # Mock le résultat de compute_recipe_stats
@@ -62,7 +64,7 @@ def test_show_recipe_ratings_page_runs(mock_compute_stats, mock_st, sample_data)
 
 @patch("food_analysis.pages.recipe_ratings_page.st", autospec=True)
 @patch("food_analysis.pages.recipe_ratings_page.recipe_reviews")
-def test_show_recipe_details(mock_reviews, mock_st, sample_data):
+def test_show_recipe_details(mock_reviews, mock_st, sample_data) -> None:
     recipe_df, interaction_df = sample_data
 
     recipe_stats = pd.Series(
