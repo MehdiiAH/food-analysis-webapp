@@ -109,17 +109,20 @@ pytest --cov
 ### Workflow Git pour l'équipe
 
 1. **Créer une branche pour votre fonctionnalité**
+
    ```bash
    git checkout -b feature/nom-de-la-fonctionnalite
    ```
 
 2. **Faire vos modifications et commits**
+
    ```bash
    git add .
    git commit -m "Description claire des changements"
    ```
 
 3. **Pousser votre branche**
+
    ```bash
    git push origin feature/nom-de-la-fonctionnalite
    ```
@@ -146,6 +149,10 @@ La documentation complète est disponible dans le dossier `docs/` et peut être 
 - HAMON Rémi
 - HORDOIR Stéphane
 - NIOL Julien
+
+## Code coverage
+
+[![codecov](https://codecov.io/gh/MehdiiAH/food-analysis-webapp/branch/main/graph/badge.svg?token=)](https://codecov.io/gh/MehdiiAH/food-analysis-webapp)
 
 ## 📄 Licence
 
