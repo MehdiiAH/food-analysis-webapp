@@ -3,6 +3,7 @@
 Version simple pour démarrer. L'équipe pourra ajouter plus de méthodes.
 """
 
+import matplotlib.pyplot as plt
 import pandas as pd
 
 
@@ -51,7 +52,6 @@ class DataAnalyzer:
         """
         Affiche la distribution des notes pour une recette spécifique.
         """
-        import matplotlib.pyplot as plt
 
         ratings = interaction_df.loc[interaction_df["recipe_id"] == recipe_id, "rating"]
         plt.hist(ratings, bins=6, edgecolor="black")
