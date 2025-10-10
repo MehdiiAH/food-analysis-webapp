@@ -1,11 +1,144 @@
 # mypy: disable-error-code="attr-defined"
 
+from unittest.mock import MagicMock, patch
+
 import pandas as pd
 import plotly.express as px  # type: ignore[import-untyped]
+import pytest
 import streamlit as st
 
 # Import temporaire (à changer quand les fonctions seront dans analyzer)
 from food_analysis.core.note_et_avis import compute_recipe_stats, recipe_reviews
+
+
+@pytest.fixture
+def recipe_df():
+    return pd.DataFrame(
+        {
+            "id": [1, 2, 3],
+            "name": ["Tarte", "Soupe", "Pizza"],
+        }
+    )
+
+
+@pytest.fixture
+def interaction_df():
+    return pd.DataFrame(
+        {
+            "recipe_id": [1, 1, 2, 3, 3, 3],
+            "rating": [5, 4, 3, 4, 5, 5],
+        }
+    )
+
+
+@pytest.fixture
+def fake_recipe_stats():
+    return pd.DataFrame(
+        {
+            "name": ["Tarte", "Soupe", "Pizza"],
+            "weighted_rating": [4.8, 4.2, 4.6],
+            "avg_rating": [4.5, 3.5, 4.7],
+            "n_reviews": [50, 10, 30],
+        }
+    )
+
+
+@pytest.fixture
+def mock_st():
+    """Mock minimal de Streamlit"""
+    with patch("streamlit", autospec=True) as st:
+        st.header = MagicMock()
+        st.sidebar = MagicMock()
+        st.subheader = MagicMock()
+        st.slider = MagicMock(side_effect=[10, 20])
+        st.spinner = MagicMock()
+        st.columns = MagicMock(
+            return_value=[MagicMock(), MagicMock(), MagicMock(), MagicMock()]
+        )
+        st.metric = MagicMock()
+        st.dataframe = MagicMock(return_value=MagicMock(selection=MagicMock(rows=[0])))
+        st.markdown = MagicMock()
+        st.caption = MagicMock()
+        st.column_config = MagicMock()
+        st.column_config.NumberColumn = MagicMock()
+        st.column_config.TextColumn = MagicMock()
+        yield st
+
+
+@patch("food_analysis.app.pages.recipe_ratings.compute_recipe_stats")
+@patch("food_analysis.app.pages.recipe_ratings.show_recipe_details")
+def test_show_recipe_ratings_page_basic(
+    mock_show_details,
+    mock_compute_stats,
+    recipe_df,
+    interaction_df,
+    fake_recipe_stats,
+    mock_st,
+):
+    mock_compute_stats.return_value = fake_recipe_stats
+
+    show_recipe_ratings_page(recipe_df, interaction_df)
+
+    # Vérifie que compute_recipe_stats est bien appelé avec les bons paramètres
+    mock_compute_stats.assert_called_once_with(recipe_df, interaction_df, m=10)
+
+    # Vérifie qu’on a bien créé les métriques
+    assert mock_st.metric.call_count >= 3
+
+    # Vérifie que la dataframe a bien été affichée
+    mock_st.dataframe.assert_called_once()
+
+    # Vérifie que la fonction show_recipe_details est appelée avec la bonne recette
+    mock_show_details.assert_called_once()
+    args, kwargs = mock_show_details.call_args
+    assert kwargs["recipe_name"] == "Tarte"
+    assert "recipe_stats" in kwargs
+    assert "recipe_df" in kwargs
+    assert "interaction_df" in kwargs
+
+
+@patch("food_analysis.app.pages.recipe_ratings.compute_recipe_stats")
+@patch("food_analysis.app.pages.recipe_ratings.show_recipe_details")
+def test_show_recipe_ratings_page_no_selection(
+    mock_show_details,
+    mock_compute_stats,
+    recipe_df,
+    interaction_df,
+    fake_recipe_stats,
+    mock_st,
+):
+    """Test : aucune sélection dans la table → première recette affichée par défaut"""
+    mock_compute_stats.return_value = fake_recipe_stats
+    mock_st.dataframe.return_value.selection.rows = []
+
+    show_recipe_ratings_page(recipe_df, interaction_df)
+
+    mock_show_details.assert_called_once()
+    args, kwargs = mock_show_details.call_args
+    assert kwargs["recipe_name"] == "Tarte"
+
+
+@patch("food_analysis.app.pages.recipe_ratings.compute_recipe_stats")
+@patch("food_analysis.app.pages.recipe_ratings.show_recipe_details")
+def test_show_recipe_ratings_page_error_handling(
+    mock_show_details,
+    mock_compute_stats,
+    recipe_df,
+    interaction_df,
+    fake_recipe_stats,
+    mock_st,
+):
+    """Test : vérifie que les erreurs d'index ou attributs sont gérées sans crash"""
+    mock_compute_stats.return_value = fake_recipe_stats
+
+    # Simule un event sans attributs selection
+    mock_st.dataframe.return_value = MagicMock()
+
+    # Doit quand même afficher la première recette
+    show_recipe_ratings_page(recipe_df, interaction_df)
+
+    mock_show_details.assert_called_once()
+    assert mock_show_details.call_args[1]["recipe_name"] == "Tarte"
 
 
 def show_recipe_ratings_page(
