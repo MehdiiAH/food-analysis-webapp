@@ -47,6 +47,10 @@ def show_recipe_ratings_page(
     with st.spinner("Calcul des statistiques des recettes..."):
         recipe_stats = compute_recipe_stats(recipe_df, interaction_df, m=m)
 
+        if recipe_stats.empty or "weighted_rating" not in recipe_stats.columns:
+            st.error("Impossible de calculer les statistiques de recette.")
+            return
+
         # Garder seulement les N premières
         top_recipes = recipe_stats.head(n_recipes)
 
