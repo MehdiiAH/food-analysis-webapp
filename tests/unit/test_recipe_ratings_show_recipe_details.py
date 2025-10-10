@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pandas as pd
 import pytest
@@ -93,3 +93,72 @@ def test_show_recipe_details_no_reviews(mock_dataframes, mock_streamlit):
     mock_streamlit.warning.assert_called_with(
         "Aucun avis disponible pour cette recette."
     )
+
+
+@patch("food_analysis.pages.recipe_ratings.px.bar")
+def test_show_recipe_details_with_reviews(mock_px_bar, mock_streamlit, mock_dataframes):
+    """Couvre toute la section d'affichage des avis (filtres, graphique, etc.)."""
+    recipe_df, interaction_df = mock_dataframes
+
+    # Ajoute des colonnes nécessaires
+    interaction_df["user_id"] = [101, 102]
+    interaction_df["date"] = ["2024-01-01", "2024-01-02"]
+    interaction_df["review"] = ["Super recette !", "Très bon, un peu sucré."]
+
+    recipe_id = 1
+    recipe_name = recipe_df.loc[recipe_df["id"] == recipe_id, "name"].iloc[0]
+    recipe_stats = pd.Series(
+        {"weighted_rating": 4.5, "avg_rating": 4.3, "n_reviews": len(interaction_df)}
+    )
+
+    # Mock du graphique Plotly
+    mock_fig = MagicMock()
+    mock_px_bar.return_value = mock_fig
+
+    # Mock des comportements Streamlit
+    # Streamlit mocks robustes
+    def mock_columns_handler(arg):
+        if isinstance(arg, int):
+            return [MagicMock() for _ in range(arg)]
+        elif isinstance(arg, (list, tuple)):
+            return [MagicMock() for _ in arg]
+        else:
+            return [MagicMock(), MagicMock()]
+
+    mock_streamlit.columns.side_effect = mock_columns_handler
+
+    mock_streamlit.multiselect.return_value = [5, 4, 3, 2, 1, 0]
+    mock_streamlit.number_input.return_value = 10
+    mock_streamlit.expander.return_value.__enter__.return_value = None
+    mock_streamlit.expander.return_value.__exit__.return_value = None
+    mock_streamlit.plotly_chart = MagicMock()
+
+    # ✅ Appel de la fonction testée
+    recipe_ratings.show_recipe_details(
+        recipe_id=recipe_id,
+        recipe_name=recipe_name,
+        recipe_stats=recipe_stats,
+        recipe_df=recipe_df,
+        interaction_df=interaction_df,
+    )
+
+    # --- Vérifications de couverture ---
+
+    # 1️⃣ Les colonnes ont bien été créées
+    assert mock_streamlit.columns.call_count >= 2
+
+    # 2️⃣ Les filtres ont été affichés
+    mock_streamlit.multiselect.assert_called_once()
+    mock_streamlit.number_input.assert_called_once()
+
+    # 3️⃣ L’info d’affichage des avis est bien appelée
+    mock_streamlit.info.assert_called()
+
+    # 4️⃣ Le graphique Plotly a bien été généré
+    mock_px_bar.assert_called_once()
+    mock_streamlit.plotly_chart.assert_called_once_with(
+        mock_fig, use_container_width=True
+    )
+
+    # 5️⃣ Vérifie que les avis sont affichés avec markdown
+    assert mock_streamlit.markdown.call_count > 0
