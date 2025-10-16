@@ -3,10 +3,47 @@
 Version simple pour démarrer. L'équipe pourra ajouter plus de méthodes.
 """
 
+# Ajout logging et exceptions
+import logging
+from logging.handlers import RotatingFileHandler
 from typing import Any
 
 import numpy as np
 import pandas as pd
+
+# Messages de log à différents niveaux
+logging.debug("Ceci est un message de niveau DEBUG")
+logging.info("Ceci est un message de niveau INFO")
+logging.warning("Ceci est un message de niveau WARNING")
+logging.error("Ceci est un message de niveau ERROR")
+logging.critical("Ceci est un message de niveau CRITICAL")
+
+# Création d'un logger pour ce module
+logger = logging.getLogger(__name__)
+
+# Définir le niveau de log sur INFO
+logger.setLevel(logging.INFO)
+
+# Création d'un handler permettant la rotation des logs, avec format compréhensible
+
+file_handler = RotatingFileHandler(
+    "analyzer.log", maxBytes=5 * 1024 * 1024, backupCount=5, encoding="utf-8"
+)
+file_handler.setLevel(logging.INFO)
+handler_format = logging.Formatter(
+    "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+file_handler.setFormatter(handler_format)
+
+console_handler = logging.StreamHandler()
+console_handler.setFormatter(handler_format)
+console_handler.setLevel(logging.INFO)
+
+# Éviter d'ajouter plusieurs handlers si le module est importé plusieurs fois
+if not logger.handlers:
+    logger.addHandler(file_handler)
+    logger.addHandler(console_handler)
+
 
 # Fonction pour calculer les statistiques des recettes
 
@@ -24,7 +61,17 @@ def compute_recipe_stats(
 
     Returns:
         pd.DataFrame: DataFrame avec id, nom, avg_rating, n_reviews et weighted_rating
+
+    Raises:
+        EmptyDataError si l'un des DataFrames est vide.
     """
+
+    try:
+        if interaction_df.empty or recipe_df.empty:
+            raise pd.errors.EmptyDataError("Un des DataFrames est vide.")
+    except pd.errors.EmptyDataError:
+        logger.warning("Attention: l'un des DataFrames est vide.")
+
     # Calculer la note moyenne et le nombre d'avis par recette
     recipe_stats = (
         interaction_df.groupby("recipe_id")
@@ -69,7 +116,15 @@ def recipe_reviews(recipe_id: int, interaction_df: pd.DataFrame) -> pd.DataFrame
 
     Returns:
         pd.DataFrame: DataFrame contenant les avis pour la recette
+
+    Raises:
+        EmptyDataError si le DataFrame des interactions est vide.
     """
+    try:
+        if interaction_df.empty:
+            raise pd.errors.EmptyDataError("Le DataFrame est vide.")
+    except pd.errors.EmptyDataError:
+        logger.warning("Attention: le DataFrame est vide.")
     return (
         interaction_df[interaction_df["recipe_id"] == recipe_id][
             ["user_id", "rating", "date", "review"]
