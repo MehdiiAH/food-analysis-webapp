@@ -3,6 +3,7 @@
 Version simple pour démarrer. L'équipe pourra ajouter plus de méthodes.
 """
 
+import numpy as np
 import pandas as pd
 
 # Fonction pour calculer les statistiques des recettes
@@ -74,3 +75,76 @@ def recipe_reviews(recipe_id: int, interaction_df: pd.DataFrame) -> pd.DataFrame
         .sort_values("date", ascending=False)
         .reset_index(drop=True)
     )
+
+
+def compute_user_stats(
+    recipe_df: pd.DataFrame, interaction_df: pd.DataFrame
+) -> pd.DataFrame:
+    """
+    Calcule les statistiques utilisateur : activité, notes données, leniency score,
+    et caractéristiques des recettes testées.
+
+    Args:
+        recipe_df (pd.DataFrame): DataFrame des recettes
+        interaction_df (pd.DataFrame): DataFrame des interactions
+
+    Returns:
+        pd.DataFrame: DataFrame des features utilisateur
+    """
+    df = interaction_df.dropna(subset=["user_id", "recipe_id", "rating"]).copy()
+    df["rating"] = pd.to_numeric(df["rating"], errors="coerce")
+    if "date" in df.columns:
+        df["date"] = pd.to_datetime(df["date"], errors="coerce")
+
+    # Features de base
+    user_stats = (
+        df.groupby("user_id")
+        .agg(
+            n_ratings=("rating", "count"),
+            avg_rating_given=("rating", "mean"),
+            std_rating_given=("rating", "std"),
+        )
+        .reset_index()
+    )
+
+    # Nombre de jours actifs
+    if "date" in df.columns:
+        user_time = df.groupby("user_id")["date"].agg(["min", "max"])
+        user_stats["n_days_active"] = (user_time["max"] - user_time["min"]).dt.days + 1
+    else:
+        user_stats["n_days_active"] = np.nan
+
+    # Préparer recettes pour features
+    recipes = recipe_df.copy()
+    recipes["n_ingredients"] = recipes["ingredients"].apply(
+        lambda x: len(eval(x)) if pd.notnull(x) else np.nan
+    )
+    recipes["n_steps"] = recipes["steps"].apply(
+        lambda x: len(eval(x)) if pd.notnull(x) else np.nan
+    )
+
+    # Merge pour features basées sur recettes
+    merged = df.merge(
+        recipes[["id", "minutes", "n_ingredients", "n_steps"]],
+        left_on="recipe_id",
+        right_on="id",
+        how="left",
+    )
+
+    user_recipe_stats = (
+        merged.groupby("user_id")
+        .agg(
+            avg_recipe_time=("minutes", "mean"),
+            avg_ingredients=("n_ingredients", "mean"),
+            avg_steps=("n_steps", "mean"),
+        )
+        .reset_index()
+    )
+
+    user_stats = user_stats.merge(user_recipe_stats, on="user_id", how="left")
+
+    # Leniency score
+    global_mean = df["rating"].mean()
+    user_stats["lenient_score"] = user_stats["avg_rating_given"] - global_mean
+
+    return user_stats
