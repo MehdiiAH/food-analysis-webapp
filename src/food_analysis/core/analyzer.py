@@ -6,7 +6,6 @@ Version simple pour démarrer. L'équipe pourra ajouter plus de méthodes.
 # Ajout logging et exceptions
 import logging
 from logging.handlers import RotatingFileHandler
-
 from typing import Any
 
 import numpy as np
@@ -68,7 +67,8 @@ def compute_recipe_stats(
     """
 
     try:
-        interaction_df.empty or recipe_df.empty
+        if interaction_df.empty or recipe_df.empty:
+            raise pd.errors.EmptyDataError("Un des DataFrames est vide.")
     except pd.errors.EmptyDataError:
         logger.warning("Attention: l'un des DataFrames est vide.")
 
@@ -121,9 +121,10 @@ def recipe_reviews(recipe_id: int, interaction_df: pd.DataFrame) -> pd.DataFrame
         EmptyDataError si le DataFrame des interactions est vide.
     """
     try:
-        interaction_df.empty
+        if interaction_df.empty:
+            raise pd.errors.EmptyDataError("Le DataFrame est vide.")
     except pd.errors.EmptyDataError:
-        logger.warning("Attention: le DataFrame des interactions est vide.")
+        logger.warning("Attention: le DataFrame est vide.")
     return (
         interaction_df[interaction_df["recipe_id"] == recipe_id][
             ["user_id", "rating", "date", "review"]
