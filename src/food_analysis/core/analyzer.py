@@ -99,6 +99,7 @@ def compute_recipe_stats(
         ]
     except pd.errors.EmptyDataError:
         logger.warning("Attention: l'un des DataFrames est vide.")
+        return None
 
 
 def recipe_reviews(recipe_id: int, interaction_df: pd.DataFrame) -> pd.DataFrame:
@@ -125,3 +126,4 @@ def recipe_reviews(recipe_id: int, interaction_df: pd.DataFrame) -> pd.DataFrame
         )
     except pd.errors.EmptyDataError:
         logger.warning("Attention: le DataFrame des interactions est vide.")
+        return None

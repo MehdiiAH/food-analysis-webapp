@@ -83,8 +83,10 @@ class DataLoader:
                 f"Erreur : fichier non disponible au chemin {path} spéficié.",
                 exc_info=True,
             )
+            return None
         except pd.errors.EmptyDataError:
             logger.warning("Attention: le fichier est vide.")
+            return None
 
     def load_interactions(self, file: str = "RAW_interactions.csv") -> pd.DataFrame:
         """
@@ -110,5 +112,7 @@ class DataLoader:
                 f"Erreur : fichier non disponible au chemin {path} spéficié.",
                 exc_info=True,
             )
+            return None
         except pd.errors.EmptyDataError:
             logger.warning("Attention: le fichier est vide.")
+            return None
