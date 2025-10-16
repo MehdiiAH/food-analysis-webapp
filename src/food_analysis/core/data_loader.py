@@ -77,16 +77,14 @@ class DataLoader:
         try:
             df = pd.read_csv(path)
             logger.info(f"Données chargées avec succès depuis {path}.")
-            return df
         except FileNotFoundError:
             logger.error(
                 f"Erreur : fichier non disponible au chemin {path} spéficié.",
                 exc_info=True,
             )
-            return None
         except pd.errors.EmptyDataError:
             logger.warning("Attention: le fichier est vide.")
-            return None
+        return df
 
     def load_interactions(self, file: str = "RAW_interactions.csv") -> pd.DataFrame:
         """
@@ -106,13 +104,11 @@ class DataLoader:
         try:
             df = pd.read_csv(path)
             logger.info(f"Données chargées avec succès depuis {path}.")
-            return df
         except FileNotFoundError:
             logger.error(
                 f"Erreur : fichier non disponible au chemin {path} spéficié.",
                 exc_info=True,
             )
-            return None
         except pd.errors.EmptyDataError:
             logger.warning("Attention: le fichier est vide.")
-            return None
+        return df

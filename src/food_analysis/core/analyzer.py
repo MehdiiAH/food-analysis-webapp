@@ -65,41 +65,42 @@ def compute_recipe_stats(
     """
 
     try:
-        # Calculer la note moyenne et le nombre d'avis par recette
-        recipe_stats = (
-            interaction_df.groupby("recipe_id")
-            .agg(avg_rating=("rating", "mean"), n_reviews=("rating", "count"))
-            .reset_index()
-        )
-
-        # Note moyenne globale
-        C = recipe_stats["avg_rating"].mean()
-
-        # Calcul de la note pondérée
-        recipe_stats["weighted_rating"] = (
-            recipe_stats["n_reviews"] / (recipe_stats["n_reviews"] + m)
-        ) * recipe_stats["avg_rating"] + (m / (recipe_stats["n_reviews"] + m)) * C
-
-        # Fusion avec le DataFrame recipe pour récupérer le nom
-        recipe_stats_with_name = pd.merge(
-            recipe_stats,
-            recipe_df[["id", "name"]],
-            left_on="recipe_id",
-            right_on="id",
-            how="left",
-        )
-
-        # Trier par note pondérée décroissante
-        recipe_stats_with_name = recipe_stats_with_name.sort_values(
-            "weighted_rating", ascending=False
-        ).reset_index(drop=True)
-
-        return recipe_stats_with_name[
-            ["name", "avg_rating", "n_reviews", "weighted_rating"]
-        ]
+        interaction_df.empty or recipe_df.empty
     except pd.errors.EmptyDataError:
         logger.warning("Attention: l'un des DataFrames est vide.")
-        return None
+
+    # Calculer la note moyenne et le nombre d'avis par recette
+    recipe_stats = (
+        interaction_df.groupby("recipe_id")
+        .agg(avg_rating=("rating", "mean"), n_reviews=("rating", "count"))
+        .reset_index()
+    )
+
+    # Note moyenne globale
+    C = recipe_stats["avg_rating"].mean()
+
+    # Calcul de la note pondérée
+    recipe_stats["weighted_rating"] = (
+        recipe_stats["n_reviews"] / (recipe_stats["n_reviews"] + m)
+    ) * recipe_stats["avg_rating"] + (m / (recipe_stats["n_reviews"] + m)) * C
+
+    # Fusion avec le DataFrame recipe pour récupérer le nom
+    recipe_stats_with_name = pd.merge(
+        recipe_stats,
+        recipe_df[["id", "name"]],
+        left_on="recipe_id",
+        right_on="id",
+        how="left",
+    )
+
+    # Trier par note pondérée décroissante
+    recipe_stats_with_name = recipe_stats_with_name.sort_values(
+        "weighted_rating", ascending=False
+    ).reset_index(drop=True)
+
+    return recipe_stats_with_name[
+        ["name", "avg_rating", "n_reviews", "weighted_rating"]
+    ]
 
 
 def recipe_reviews(recipe_id: int, interaction_df: pd.DataFrame) -> pd.DataFrame:
@@ -117,13 +118,13 @@ def recipe_reviews(recipe_id: int, interaction_df: pd.DataFrame) -> pd.DataFrame
         EmptyDataError si le DataFrame des interactions est vide.
     """
     try:
-        return (
-            interaction_df[interaction_df["recipe_id"] == recipe_id][
-                ["user_id", "rating", "date", "review"]
-            ]
-            .sort_values("date", ascending=False)
-            .reset_index(drop=True)
-        )
+        interaction_df.empty
     except pd.errors.EmptyDataError:
         logger.warning("Attention: le DataFrame des interactions est vide.")
-        return None
+    return (
+        interaction_df[interaction_df["recipe_id"] == recipe_id][
+            ["user_id", "rating", "date", "review"]
+        ]
+        .sort_values("date", ascending=False)
+        .reset_index(drop=True)
+    )
