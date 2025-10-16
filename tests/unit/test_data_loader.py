@@ -1,19 +1,34 @@
 """Tests simples pour DataLoader."""
 
 from pathlib import Path
+from unittest.mock import patch
 
+import pandas as pd
 import pytest
 
 from food_analysis.core.data_loader import DataLoader
 
+# ---------------------------
+# Tests load_recipes / load_interactions
+# ---------------------------
 
-def test_data_loader_init_default() -> None:
-    """Test que DataLoader s'initialise avec le chemin par défaut."""
-    # Act
-    loader = DataLoader()
 
-    # Assert
-    assert loader.data_path == Path("data/raw")
+@patch("pandas.read_csv")
+def test_load_recipes(mock_read_csv):
+    df_mock = pd.DataFrame({"id": [1], "name": ["Pasta"]})
+    mock_read_csv.return_value = df_mock
+    result = DataLoader.load_recipes("fake_path.csv")
+    mock_read_csv.assert_called_once_with("fake_path.csv")
+    pd.testing.assert_frame_equal(result, df_mock)
+
+
+@patch("pandas.read_csv")
+def test_load_interactions(mock_read_csv):
+    df_mock = pd.DataFrame({"recipe_id": [1], "rating": [5]})
+    mock_read_csv.return_value = df_mock
+    result = DataLoader.load_interactions("fake_path.csv")
+    mock_read_csv.assert_called_once_with("fake_path.csv")
+    pd.testing.assert_frame_equal(result, df_mock)
 
 
 def test_data_loader_init_custom_path() -> None:
