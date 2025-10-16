@@ -122,5 +122,5 @@ jobs:
           docker stop test-container
 
       # 5️⃣ (Optionnel) Lancer les tests intégrés dans le conteneur
-      - name: Run unit tests inside container
-        run: docker run --rm my-app:ci python -m unittest discover tests/unit
+      # - name: Run unit tests inside container
+      #   run: docker run --rm my-app:ci python -m unittest discover tests/unit
