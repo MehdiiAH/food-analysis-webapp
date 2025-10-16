@@ -3,6 +3,8 @@
 Version simple pour démarrer. L'équipe pourra ajouter plus de méthodes.
 """
 
+from typing import Any
+
 import numpy as np
 import pandas as pd
 
@@ -109,7 +111,7 @@ def compute_user_stats(
 
     # Nombre de jours actifs
     if "date" in df.columns:
-        user_time = df.groupby("user_id")["date"].agg(["min", "max"])
+        user_time: Any = df.groupby('user_id')['date'].agg(['min','max'])
         user_stats["n_days_active"] = (user_time["max"] - user_time["min"]).dt.days + 1
     else:
         user_stats["n_days_active"] = np.nan
