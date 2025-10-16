@@ -102,6 +102,7 @@ jobs:
           pwd
           ls -l
           ls -l src/food_analysis
+          ls -l tests/unit
 
       # 2️⃣ Configurer Docker (déjà installé sur ubuntu-latest)
       - name: Set up Docker Buildx

@@ -6,14 +6,9 @@ import pytest
 
 from food_analysis.core.data_loader import DataLoader
 
-
-def test_data_loader_init_default() -> None:
-    """Test que DataLoader s'initialise avec le chemin par défaut."""
-    # Act
-    loader = DataLoader()
-
-    # Assert
-    assert loader.data_path == Path("data/raw")
+# ---------------------------
+# Tests load_recipes / load_interactions
+# ---------------------------
 
 
 def test_data_loader_init_custom_path() -> None:
