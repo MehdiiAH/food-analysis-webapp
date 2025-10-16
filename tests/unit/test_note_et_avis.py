@@ -1,10 +1,9 @@
 # tests/unit/test_note_et_avis.py
 from unittest.mock import patch
 
+import food_analysis.core.note_et_avis as nea
 import pandas as pd
 import pytest
-
-import food_analysis.core.note_et_avis as nea
 
 # ---------------------------
 # Fixtures pour les données
