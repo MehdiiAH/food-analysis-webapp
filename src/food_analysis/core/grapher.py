@@ -1,6 +1,8 @@
 # =========================================================
 # grapher.py
 # =========================================================
+from typing import Optional
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -9,7 +11,7 @@ import pandas as pd
 def plot_activity_vs_leniency(
     user_stats: pd.DataFrame,
     log_x: bool = False,
-    x_limit: int = None,
+    x_limit: Optional[int] = None,
     jitter: float = 0.0,
 ) -> None:
     """
