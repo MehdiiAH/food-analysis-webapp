@@ -1,0 +1,75 @@
+from typing import Iterable, List, Set, Tuple
+import pandas as pd
+import spacy
+from spacy.tokens import Doc
+
+
+def extract_text_from_df(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    The function takes the recipe dataframe to extract only recipe name and recipe
+    description and cconcatenate them in a single column for tokenization.
+
+    TODO add a test on df columns and error message if name and description are missing
+    """
+
+    mask = df[["name", "description"]].notna().any(axis=1)
+    data_text = df.loc[mask, ["name", "description"]].copy()
+    data_text["full_text"] = (
+        data_text["name"].fillna("") + " " + data_text["description"].fillna("")
+    )
+    return data_text
+
+
+def extract_tokens_from_df(df: pd.DataFrame) -> Tuple[Iterable[Doc], Set[str]]:
+    """
+    The function creates a nlp pipeline to extract tokens the recipe
+    name and description
+
+    TODO add a test on df columns and error message if full text is missing
+    """
+    nlp = spacy.load("en_core_web_sm", disable=["ner"])
+    stopwords = {w.lower() for w in nlp.Defaults.stop_words}
+
+    texts = df["full_text"].tolist()
+    docs = nlp.pipe(texts, batch_size=50, n_process=4)
+
+    return docs, stopwords
+
+
+def extract_tokens_from_doc(doc: Doc, stopwords: Set[str]) -> List[str]:
+    """
+    The function selects the interesting tokens for each doc.
+    Interesting tokens are lemmas with position noun and adjective.
+    It excludes other words, numbers and stopwords
+    """
+    return [
+        token.lemma_.lower()
+        for token in doc
+        if token.is_alpha
+        and token.pos_ in {"NOUN", "ADJ"}
+        and token.lemma_.lower() not in stopwords
+    ]
+
+
+def store_tokens_in_df(
+    docs: Iterable[Doc], stopwords: Set[str], df: pd.DataFrame
+) -> pd.DataFrame:
+    """
+    The function loops on the docs to extract the tokens and store them
+    in a new column of the recipe dataframe.
+    """
+
+    tokens_extracted = [extract_tokens_from_doc(doc, stopwords) for doc in docs]
+
+    if len(tokens_extracted) != len(df):
+        raise RuntimeError("Mismatch between number of documents and dataframe size")
+
+    if "tokens" not in df.columns:
+        df["tokens"] = pd.Series([None] * len(df), index=df.index, dtype=object)
+    else:
+        df["tokens"] = df["tokens"].astype(object)
+
+    tokens_series = pd.Series(tokens_extracted, index=df.index, dtype=object)
+    df.loc[df.index, "tokens"] = tokens_series
+
+    return df
