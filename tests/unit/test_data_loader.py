@@ -1,9 +1,7 @@
 """Tests simples pour DataLoader."""
 
 from pathlib import Path
-from unittest.mock import patch
 
-import pandas as pd
 import pytest
 
 from food_analysis.core.data_loader import DataLoader
@@ -11,9 +9,6 @@ from food_analysis.core.data_loader import DataLoader
 # ---------------------------
 # Tests load_recipes / load_interactions
 # ---------------------------
-
-
-
 
 
 def test_data_loader_init_custom_path() -> None:
