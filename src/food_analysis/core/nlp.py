@@ -4,10 +4,11 @@ The module contains functions to execute a search based on NLP using TF-IDF
 """
 
 from typing import Dict, List, Tuple
+
+import numpy as np
 from scipy.sparse import csr_matrix
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.neighbors import NearestNeighbors
-import numpy as np
 
 
 def create_vocabulary(texts: List[str]) -> Dict:

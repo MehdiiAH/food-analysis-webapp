@@ -3,6 +3,7 @@ The module contains functions to tokenize the recipe dataframe
 """
 
 from typing import Iterable, List, Set, Tuple
+
 import pandas as pd
 import spacy
 from spacy.tokens import Doc
