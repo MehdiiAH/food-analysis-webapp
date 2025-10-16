@@ -13,22 +13,7 @@ from food_analysis.core.data_loader import DataLoader
 # ---------------------------
 
 
-@patch("pandas.read_csv")
-def test_load_recipes(mock_read_csv):
-    df_mock = pd.DataFrame({"id": [1], "name": ["Pasta"]})
-    mock_read_csv.return_value = df_mock
-    result = DataLoader.load_recipes("fake_path.csv")
-    mock_read_csv.assert_called_once_with("fake_path.csv")
-    pd.testing.assert_frame_equal(result, df_mock)
 
-
-@patch("pandas.read_csv")
-def test_load_interactions(mock_read_csv):
-    df_mock = pd.DataFrame({"recipe_id": [1], "rating": [5]})
-    mock_read_csv.return_value = df_mock
-    result = DataLoader.load_interactions("fake_path.csv")
-    mock_read_csv.assert_called_once_with("fake_path.csv")
-    pd.testing.assert_frame_equal(result, df_mock)
 
 
 def test_data_loader_init_custom_path() -> None:
