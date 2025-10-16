@@ -4,8 +4,7 @@ import pandas as pd
 import plotly.express as px  # type: ignore[import-untyped]
 import streamlit as st
 
-# Import temporaire (à changer quand les fonctions seront dans analyzer)
-from food_analysis.core.note_et_avis import compute_recipe_stats, recipe_reviews
+from food_analysis.core.analyzer import compute_recipe_stats, recipe_reviews
 
 
 def show_recipe_ratings_page(
