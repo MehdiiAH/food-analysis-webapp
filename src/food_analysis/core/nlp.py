@@ -71,47 +71,84 @@ def count_words(texts: List[str], vocabulary: Dict) -> csr_matrix:
     return counts_sparse
 
 
-def tf_idf_transformer() -> TfidfTransformer:
+def count_query(tokens: List[str], vocabulary: Dict) -> csr_matrix:
     """
-    Set a TF-IDF transformer from library Scikit-Learn
-
-    Returns
-    -------
-    transformer : TfidfTransformer
-        A transformer ready to apply on a BoW
-    """
-    transformer = TfidfTransformer()
-
-    return transformer
-
-
-def tf_idf_recipes(counts: csr_matrix, transformer: TfidfTransformer) -> csr_matrix:
-    """
-    The function converts a bag of words in TF-IDF matrix
+    The function creates a bag of words from a list of document
+    and a vocabulary in a sparse format
 
     Parameters:
     -----------
-    counts: csr_matrix
-        A sparse matrix containing the BoW
-    transformer: TfidfTransformer
-        The transformer for the TF-IDF
+    tokens: List[str]
+        A list of tokens created with a tokenizer
+        from the user searched string
+    vocabulary: Dict
+        The dictionary of words to be counted
 
     Returns:
     --------
-    tf_idf: csr_matrix
-        A sparse matrix transformed in TF-IDF
+    counts_sparse: csr_matrix
+        A sparse matrix containing the number of each word
+        in each document.
+
     """
-    tf_idf = transformer.fit_transform(counts)
+    count_vector = np.zeros(len(vocabulary), dtype=int)
+
+    # Filling the matrix by iterating over the documents and counting the words
+    for word in tokens:
+        if word in vocabulary:
+            count_vector[vocabulary[word]] += 1
+
+    # Creating a sparse matrix for TF-IDF transformation
+    counts_sparse = csr_matrix(count_vector)
+
+    return counts_sparse
+
+
+def tf_idf_search(
+    recipe_counts: csr_matrix,
+    query_counts: csr_matrix,
+) -> Tuple[csr_matrix, csr_matrix]:
+    """
+    The function converts a bag of words in TF-IDF matrix for
+    the reference dataset and for the searched string
+
+    Parameters:
+    -----------
+    recipe_counts: csr_matrix
+        A sparse matrix containing the BoW
+    quey_counts: csr_matrix
+        A sparse matrix containing the tokenized query as a BoW
+
+    Returns:
+    --------
+    tf_idf_recipe: csr_matrix
+        A sparse matrix transformed in TF-IDF for the dataset
+    tf_idf_query: csr_matrix
+        A sparse matrix transformed in TF-IDF for the query
+    """
+    transformer = TfidfTransformer()
+    tf_idf_recipe = transformer.fit_transform(recipe_counts)
+    tf_idf_query = transformer.transform(query_counts)
 
     # Ensure we always return a CSR sparse matrix (fit_transform may return ndarray)
-    if isinstance(tf_idf, csr_matrix):
-        return tf_idf
-    return csr_matrix(tf_idf)
+    if isinstance(tf_idf_recipe, csr_matrix):
+        if isinstance(tf_idf_query, csr_matrix):
+            return tf_idf_recipe, tf_idf_query
+        else:
+            return tf_idf_recipe, csr_matrix(tf_idf_query)
+    else:
+        if isinstance(tf_idf_query, csr_matrix):
+            return csr_matrix(tf_idf_recipe), tf_idf_query
+        else:
+            return csr_matrix(tf_idf_recipe), csr_matrix(tf_idf_query)
 
 
-def knn_train(tf_idf: csr_matrix, k: int) -> NearestNeighbors:
+def knn_search(
+    tf_idf: csr_matrix, k: int, query_input: csr_matrix
+) -> Tuple[np.ndarray, np.ndarray]:
     """
     The function trains a KNN model on the TF-IDF matrix
+    and search for the nearest neighbors of the searched string
 
     Parameters:
     -----------
@@ -119,37 +156,19 @@ def knn_train(tf_idf: csr_matrix, k: int) -> NearestNeighbors:
         A sparse matrix containing the result of the TF-IDF
     k: int
         The number of neighbors
-
-    Returns:
-    --------
-    knn_model: NearestNeighbors
-        The model trained on the TF-IDF
-    """
-    knn_model = NearestNeighbors(n_neighbors=k, metric="cosine", algorithm="brute")
-
-    knn_model.fit(tf_idf)
-
-    return knn_model
-
-
-def knn_search(
-    knn_model: NearestNeighbors, query_input: csr_matrix
-) -> Tuple[np.ndarray, np.ndarray]:
-    """
-    The function sends back the nearest neighbors of the user search with distances
-
-    Parameters:
-    -----------
-    knn_model: NearestNeighbors
-        A knn model trained on the recipe dataset with TF-IDF
     query_input: csr_matrix
         A vector transformed by the same TF-IDF
 
     Returns:
+    --------
     distances: np.ndarray
         An array of distances
     indices: np.ndarray
         An array with the indices of the nearest recipes
+
     """
+    knn_model = NearestNeighbors(n_neighbors=k, metric="cosine", algorithm="brute")
+    knn_model.fit(tf_idf)
     distances, indices = knn_model.kneighbors(query_input)
+
     return distances, indices
