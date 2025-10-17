@@ -128,3 +128,14 @@ def store_tokens_in_df(
     df.loc[df.index, "tokens"] = tokens_series
 
     return df
+
+
+def extract_tokens_from_string(query_text: str) -> List[str]:
+    """ """
+    nlp = spacy.load("en_core_web_sm", disable=["ner"])
+    stopwords = {w.lower() for w in nlp.Defaults.stop_words}
+    docs = list(nlp.pipe(query_text))  # convert generator → list of Docs
+    query_doc = docs[0]
+    tokens_extracted = extract_tokens_from_doc(query_doc, stopwords)
+
+    return tokens_extracted
