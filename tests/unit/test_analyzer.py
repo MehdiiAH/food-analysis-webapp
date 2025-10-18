@@ -79,9 +79,11 @@ def test_compute_recipe_stats_basic(recipe_df, interaction_df):
     """Vérifie que la fonction renvoie bien un DataFrame trié et cohérent."""
     result = compute_recipe_stats(recipe_df, interaction_df, m=5)
     assert isinstance(result, pd.DataFrame)
-    assert set(["name", "avg_rating", "n_reviews", "weighted_rating"]).issubset(
+
+    assert {"name", "avg_rating", "n_reviews", "weighted_rating"}.issubset(
         result.columns
     )
+
     # Les recettes doivent être triées par weighted_rating décroissant
     assert all(
         result["weighted_rating"].sort_values(ascending=False)
