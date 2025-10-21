@@ -3,10 +3,11 @@ The module contains functions to execute a search based on NLP using TF-IDF
 (Term Frequency-Inverse Document Frequency) and nearest neighbours algorithms
 """
 
+import json
 from typing import Dict, List, Tuple
 
 import numpy as np
-from scipy.sparse import csr_matrix
+from scipy.sparse import csr_matrix, save_npz
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.neighbors import NearestNeighbors
 
@@ -67,6 +68,8 @@ def count_words(texts: List[str], vocabulary: Dict) -> csr_matrix:
 
     # Creating a sparse matrix for TF-IDF transformation
     counts_sparse = csr_matrix(counts)
+
+    save_vocabulary_counts(counts_sparse, vocabulary)
 
     return counts_sparse
 
@@ -172,3 +175,22 @@ def knn_search(
     distances, indices = knn_model.kneighbors(query_input)
 
     return distances, indices
+
+
+def save_vocabulary_counts(matrix: csr_matrix, vocabulary: Dict) -> None:
+    """
+    The function saves the dictionary and the bag of words for further use
+
+    Parameters:
+    -----------
+    matrix: csr_matrix
+        A sparse matrix containing the bag of word
+    vocabulary: Dict
+        A dictionary containing the vocabulary
+    """
+    save_npz("data/processed/matrix.npz", matrix)
+
+    with open("data/processed/dict.json", "w", encoding="utf-8") as f:
+        json.dump(vocabulary, f)
+
+    return None
