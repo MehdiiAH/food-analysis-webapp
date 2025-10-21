@@ -2,11 +2,46 @@
 The module contains functions to tokenize the recipe dataframe
 """
 
+import logging
+from logging.handlers import RotatingFileHandler
 from typing import Iterable, List, Set, Tuple
 
 import pandas as pd
 import spacy
 from spacy.tokens import Doc
+
+# Messages de log à différents niveaux
+logging.debug("Ceci est un message de niveau DEBUG")
+logging.info("Ceci est un message de niveau INFO")
+logging.warning("Ceci est un message de niveau WARNING")
+logging.error("Ceci est un message de niveau ERROR")
+logging.critical("Ceci est un message de niveau CRITICAL")
+
+# Création d'un logger pour ce module
+logger = logging.getLogger(__name__)
+
+# Définir le niveau de log sur INFO
+logger.setLevel(logging.INFO)
+
+# Création d'un handler permettant la rotation des logs, avec format compréhensible
+
+file_handler = RotatingFileHandler(
+    "tokenization.log", maxBytes=5 * 1024 * 1024, backupCount=5, encoding="utf-8"
+)
+file_handler.setLevel(logging.INFO)
+handler_format = logging.Formatter(
+    "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+file_handler.setFormatter(handler_format)
+
+console_handler = logging.StreamHandler()
+console_handler.setFormatter(handler_format)
+console_handler.setLevel(logging.INFO)
+
+# Éviter d'ajouter plusieurs handlers si le module est importé plusieurs fois
+if not logger.handlers:
+    logger.addHandler(file_handler)
+    logger.addHandler(console_handler)
 
 
 def extract_text_from_df(df: pd.DataFrame) -> pd.DataFrame:
@@ -32,6 +67,7 @@ def extract_text_from_df(df: pd.DataFrame) -> pd.DataFrame:
     data_text["full_text"] = (
         data_text["name"].fillna("") + " " + data_text["description"].fillna("")
     )
+    logger.info("Name and description extracted from dataframe")
     return data_text
 
 
@@ -59,6 +95,8 @@ def extract_tokens_from_df(df: pd.DataFrame) -> Tuple[Iterable[Doc], Set[str]]:
 
     texts = df["full_text"].tolist()
     docs = nlp.pipe(texts, batch_size=50, n_process=4)
+
+    logger.info("Tokenization complete")
 
     return docs, stopwords
 
@@ -116,6 +154,8 @@ def store_tokens_in_df(
 
     tokens_extracted = [extract_tokens_from_doc(doc, stopwords) for doc in docs]
 
+    logger.info("Tokens extracted")
+
     if len(tokens_extracted) != len(df):
         raise RuntimeError("Mismatch between number of documents and dataframe size")
 
@@ -127,15 +167,30 @@ def store_tokens_in_df(
     tokens_series = pd.Series(tokens_extracted, index=df.index, dtype=object)
     df.loc[df.index, "tokens"] = tokens_series
 
+    logger.info("Tokens stored in dataframe")
+
     return df
 
 
 def extract_tokens_from_string(query_text: str) -> List[str]:
-    """ """
+    """
+    This function extracts interesting tokens from the user search on the webapp
+
+    Parameters:
+    -----------
+    query_text: str
+        A string captured from the search bar of the webapp
+
+    Returns:
+    --------
+    tokens_extracted: List[str]
+        The list of interesting tokens from the search
+    """
     nlp = spacy.load("en_core_web_sm", disable=["ner"])
     stopwords = {w.lower() for w in nlp.Defaults.stop_words}
     docs = list(nlp.pipe(query_text))  # convert generator → list of Docs
     query_doc = docs[0]
     tokens_extracted = extract_tokens_from_doc(query_doc, stopwords)
+    logger.info("User search tokenized")
 
     return tokens_extracted
