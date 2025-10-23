@@ -200,7 +200,7 @@ def extract_tokens_from_string(query_text: str) -> List[str]:
         The list of interesting tokens from the search
     """
 
-    if not query_text.strip():
+    if not query_text:
         logger.error("User has indicated an empty string for the search")
         raise ValueError("Searched string empty")
 
