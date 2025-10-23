@@ -9,6 +9,7 @@ from logging.handlers import RotatingFileHandler
 from typing import Dict, List, Tuple
 
 import numpy as np
+import pandas as pd
 from scipy.sparse import csr_matrix, save_npz
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.neighbors import NearestNeighbors
@@ -250,3 +251,29 @@ def save_vocabulary_counts(matrix: csr_matrix, vocabulary: Dict) -> None:
         json.dump(vocabulary, f)
 
     return None
+
+
+def send_recipes_id(df: pd.DataFrame, indices: np.ndarray) -> pd.DataFrame:
+    """
+    This function sends back the dataframe containing
+    only the nearest neighbors of the recipe searched
+
+    Parameters:
+    -----------
+    df: pd.DataFrame
+        A dataframe containing the recipes used to train the model
+    indices: np.ndarray
+        A table containing indexes of the nearest neighbors
+
+    Returns:
+    --------
+    recipes_df: pd.DataFrame
+        A dataframe reduced to closest recipes only
+    """
+    selected_indices = indices.flatten()
+    try:
+        recipes_df = df.iloc[selected_indices].copy()
+        return recipes_df
+    except IndexError:
+        logger.error("Incorrect indexes for this dataframe")
+        return df
