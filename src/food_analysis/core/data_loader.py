@@ -13,14 +13,14 @@ from __future__ import annotations
 import logging
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
-from typing import Optional, Dict, List, Literal, cast
+from typing import Dict, List, Literal, Optional, cast
 
 import pandas as pd
 from pandas._typing import DtypeArg
 
 # ------------------ CONFIG URLs (hardcodées) ------------------
 _HF_BASE = "https://huggingface.co/datasets/MehdiiAH/mangetamain/resolve/main/"
-RECIPES_URL: str = _HF_BASE + "RAW_recipes.csv" 
+RECIPES_URL: str = _HF_BASE + "RAW_recipes.csv"
 INTERACTIONS_URL: str = _HF_BASE + "RAW_interactions.csv"
 READ_FROM_URLS_FIRST: bool = True
 
@@ -33,11 +33,17 @@ PARQUET_ENGINE: Literal["auto", "pyarrow", "fastparquet"] = "pyarrow"
 
 # ------------------ Colonnes minimales + dtypes downcast ------------------
 RECIPES_USECOLS: List[str] = [
-    "id", "name", "minutes", "contributor_id", "submitted", "n_steps", "n_ingredients",
+    "id",
+    "name",
+    "minutes",
+    "contributor_id",
+    "submitted",
+    "n_steps",
+    "n_ingredients",
 ]
 RECIPES_DTYPES: Dict[str, DtypeArg] = {
     "id": "int32",
-    "minutes": "int32",         # int16 peut overflow si valeurs extrêmes
+    "minutes": "int32",  # int16 peut overflow si valeurs extrêmes
     "contributor_id": "int32",
     "n_steps": "int16",
     "n_ingredients": "int8",
@@ -93,7 +99,7 @@ def _read_recipes_from_url() -> pd.DataFrame:
         usecols=RECIPES_USECOLS,
         dtype=RECIPES_DTYPES,
         parse_dates=["submitted"],
-        date_format="mixed",   
+        date_format="mixed",
         low_memory=True,
     )
     # string dtype moderne (compact + évite object)
@@ -128,23 +134,34 @@ class DataLoader:
         # 1) Parquet local si dispo (évite reparse CSV)
         if RECIPES_PARQUET.exists():
             try:
-                df = cast(pd.DataFrame, pd.read_parquet(path=RECIPES_PARQUET, engine=PARQUET_ENGINE))
+                df = cast(
+                    pd.DataFrame,
+                    pd.read_parquet(path=RECIPES_PARQUET, engine=PARQUET_ENGINE),
+                )
                 return df
             except Exception:
-                logger.exception("Lecture Parquet recipes échouée, on retente via URL/local…")
+                logger.exception(
+                    "Lecture Parquet recipes échouée, on retente via URL/local…"
+                )
 
         # 2) URL HF
         if READ_FROM_URLS_FIRST:
             try:
                 df = _read_recipes_from_url()
                 try:
-                    df.to_parquet(path=RECIPES_PARQUET, engine=PARQUET_ENGINE, index=False)
+                    df.to_parquet(
+                        path=RECIPES_PARQUET, engine=PARQUET_ENGINE, index=False
+                    )
                 except Exception:
-                    logger.warning("Impossible d'écrire le cache Parquet recipes (non bloquant).")
+                    logger.warning(
+                        "Impossible d'écrire le cache Parquet recipes (non bloquant)."
+                    )
                 logger.info("Recettes chargées depuis Hugging Face ✅")
                 return df
             except Exception:
-                logger.exception("Lecture via URL des recettes a échoué, essai en local…")
+                logger.exception(
+                    "Lecture via URL des recettes a échoué, essai en local…"
+                )
 
         # 3) Fallback local minimal
         path = self.data_path / file
@@ -163,22 +180,33 @@ class DataLoader:
         """Charge le DataFrame des interactions (parquet cache -> URL HF -> local)."""
         if INTER_PARQUET.exists():
             try:
-                df = cast(pd.DataFrame, pd.read_parquet(path=INTER_PARQUET, engine=PARQUET_ENGINE))
+                df = cast(
+                    pd.DataFrame,
+                    pd.read_parquet(path=INTER_PARQUET, engine=PARQUET_ENGINE),
+                )
                 return df
             except Exception:
-                logger.exception("Lecture Parquet interactions échouée, on retente via URL/local…")
+                logger.exception(
+                    "Lecture Parquet interactions échouée, on retente via URL/local…"
+                )
 
         if READ_FROM_URLS_FIRST:
             try:
                 df = _read_interactions_from_url()
                 try:
-                    df.to_parquet(path=INTER_PARQUET, engine=PARQUET_ENGINE, index=False)
+                    df.to_parquet(
+                        path=INTER_PARQUET, engine=PARQUET_ENGINE, index=False
+                    )
                 except Exception:
-                    logger.warning("Impossible d'écrire le cache Parquet interactions (non bloquant).")
+                    logger.warning(
+                        "Impossible d'écrire le cache Parquet interactions (non bloquant)."
+                    )
                 logger.info("Interactions chargées depuis Hugging Face ✅")
                 return df
             except Exception:
-                logger.exception("Lecture via URL des interactions a échoué, essai en local…")
+                logger.exception(
+                    "Lecture via URL des interactions a échoué, essai en local…"
+                )
 
         path = self.data_path / file
         df_local: pd.DataFrame = pd.read_csv(
