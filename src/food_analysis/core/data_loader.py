@@ -13,14 +13,16 @@ from __future__ import annotations
 import logging
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
-from typing import Dict, List, Literal, Optional, cast
+from typing import List, Literal, Mapping, Optional, cast
 
 import pandas as pd
-from pandas._typing import DtypeArg
+from pandas._typing import DtypeArg  # pour typer correctement 'dtype' dans read_csv
 
 # ------------------ CONFIG URLs (hardcodées) ------------------
-_HF_BASE = "https://huggingface.co/datasets/MehdiiAH/mangetamain/resolve/main/"
-RECIPES_URL: str = _HF_BASE + "RAW_recipes.csv"
+_HF_BASE: str = "https://huggingface.co/datasets/MehdiiAH/mangetamain/resolve/main/"
+RECIPES_URL: str = (
+    _HF_BASE + "RAW_recipes.csv"
+)  # ou ".csv.gz" si tu compresses plus tard
 INTERACTIONS_URL: str = _HF_BASE + "RAW_interactions.csv"
 READ_FROM_URLS_FIRST: bool = True
 
@@ -41,21 +43,23 @@ RECIPES_USECOLS: List[str] = [
     "n_steps",
     "n_ingredients",
 ]
-RECIPES_DTYPES: Dict[str, DtypeArg] = {
+# IMPORTANT pour mypy: dtype = Mapping[str, DtypeArg]
+RECIPES_DTYPES: Mapping[str, DtypeArg] = {
     "id": "int32",
     "minutes": "int32",  # int16 peut overflow si valeurs extrêmes
     "contributor_id": "int32",
     "n_steps": "int16",
     "n_ingredients": "int8",
-    # "name": string (appliqué après), "submitted": datetime
+    # "name" string (appliqué après), "submitted" datetime
 }
 
-INTER_USECOLS: List[str] = ["user_id", "recipe_id", "rating", "date"]
-INTER_DTYPES: Dict[str, DtypeArg] = {
+# On RÉ-INTRODUIT 'review' ici pour réparer le KeyError.
+INTER_USECOLS: List[str] = ["user_id", "recipe_id", "rating", "date", "review"]
+INTER_DTYPES: Mapping[str, DtypeArg] = {
     "user_id": "int64",
     "recipe_id": "int32",
     "rating": "int8",
-    # "date": datetime
+    # "date" datetime, "review" string (appliqué après)
 }
 
 # ------------------ LOGGING identique ------------------
@@ -94,12 +98,13 @@ def _ensure_parquet_dir() -> None:
 def _read_recipes_from_url() -> pd.DataFrame:
     """Lit les recettes depuis l'URL HF (CSV) avec options RAM-friendly."""
     logger.info(f"Téléchargement recettes depuis URL: {RECIPES_URL}")
+    # cast explicite pour satisfaire mypy sur dtype=Mapping[str, DtypeArg]
     df: pd.DataFrame = pd.read_csv(
         RECIPES_URL,
         usecols=RECIPES_USECOLS,
-        dtype=RECIPES_DTYPES,
+        dtype=cast(Mapping[str, DtypeArg], RECIPES_DTYPES),
         parse_dates=["submitted"],
-        date_format="mixed",
+        date_format="mixed",  # pandas >=2.0
         low_memory=True,
     )
     # string dtype moderne (compact + évite object)
@@ -113,11 +118,13 @@ def _read_interactions_from_url() -> pd.DataFrame:
     df: pd.DataFrame = pd.read_csv(
         INTERACTIONS_URL,
         usecols=INTER_USECOLS,
-        dtype=INTER_DTYPES,
+        dtype=cast(Mapping[str, DtypeArg], INTER_DTYPES),
         parse_dates=["date"],
         date_format="mixed",
         low_memory=True,
     )
+    # On caste 'review' après coup pour éviter des problèmes de dtype dans le mapping
+    df["review"] = df["review"].astype("string")
     return df
 
 
@@ -168,7 +175,7 @@ class DataLoader:
         df_local: pd.DataFrame = pd.read_csv(
             path,
             usecols=RECIPES_USECOLS,
-            dtype=RECIPES_DTYPES,
+            dtype=cast(Mapping[str, DtypeArg], RECIPES_DTYPES),
             parse_dates=["submitted"],
             date_format="mixed",
             low_memory=True,
@@ -212,10 +219,11 @@ class DataLoader:
         df_local: pd.DataFrame = pd.read_csv(
             path,
             usecols=INTER_USECOLS,
-            dtype=INTER_DTYPES,
+            dtype=cast(Mapping[str, DtypeArg], INTER_DTYPES),
             parse_dates=["date"],
             date_format="mixed",
             low_memory=True,
         )
+        df_local["review"] = df_local["review"].astype("string")
         logger.info(f"Interactions chargées depuis {path} ✅")
         return df_local
