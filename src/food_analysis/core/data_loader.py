@@ -1,7 +1,8 @@
 """
 Data loading and preprocessing module.
 
-Ce module doit gérer le chargement des données Food.com.
+Lit les CSV publics hébergés sur Hugging Face (hardcodés),
+et retombe en local (data/raw) si jamais l'URL échoue.
 """
 
 import logging
@@ -11,20 +12,20 @@ from typing import Optional
 
 import pandas as pd
 
-# Messages de log à différents niveaux
+_HF_BASE = "https://huggingface.co/datasets/MehdiiAH/mangetamain/resolve/main/"
+RECIPES_URL = _HF_BASE + "RAW_recipes.csv"
+INTERACTIONS_URL = _HF_BASE + "RAW_interactions.csv"
+READ_FROM_URLS_FIRST = True
+
+# ------------------ LOGGING identique à ton code ------------------
 logging.debug("Ceci est un message de niveau DEBUG")
 logging.info("Ceci est un message de niveau INFO")
 logging.warning("Ceci est un message de niveau WARNING")
 logging.error("Ceci est un message de niveau ERROR")
 logging.critical("Ceci est un message de niveau CRITICAL")
 
-# Création d'un logger pour ce module
 logger = logging.getLogger(__name__)
-
-# Définir le niveau de log sur INFO
 logger.setLevel(logging.INFO)
-
-# Création d'un handler permettant la rotation des logs, avec format compréhensible
 
 file_handler = RotatingFileHandler(
     "data_loader.log", maxBytes=5 * 1024 * 1024, backupCount=5, encoding="utf-8"
@@ -39,76 +40,52 @@ console_handler = logging.StreamHandler()
 console_handler.setFormatter(handler_format)
 console_handler.setLevel(logging.INFO)
 
-# Éviter d'ajouter plusieurs handlers si le module est importé plusieurs fois
 if not logger.handlers:
     logger.addHandler(file_handler)
     logger.addHandler(console_handler)
 
 
 class DataLoader:
-    """Classe servant à charger les données de Food.com."""
+    """Charge les données Food.com depuis HF (hardcodé) puis fallback local si besoin."""
 
     def __init__(self, data_path: Optional[Path] = None) -> None:
-        """
-        Initialise le loader.
-
-        Args:
-            data_path: Chemin vers le dossier des données (optionnel)
-        """
-        if data_path is None:
-            data_path = Path("data/raw")
-        self.data_path = data_path
+        self.data_path = Path("data/raw") if data_path is None else data_path
 
     def load_recipes(self, file: str = "RAW_recipes.csv") -> pd.DataFrame:
-        """
-        Charge les recettes depuis un fichier CSV.
-
-        Args:
-            path (str): chemin vers le fichier CSV
-
-        Returns:
-            pd.DataFrame: DataFrame contenant les recettes
-
-        Raises:
-            FileNotFoundError si le fichier n'est pas trouvé au chemin spécifié.
-            EmptyDataError si le fichier est vide.
-        """
+        """Charge les recettes (URL HF en priorité, sinon local)."""
+        if READ_FROM_URLS_FIRST:
+            try:
+                logger.info(f"Téléchargement recettes depuis URL: {RECIPES_URL}")
+                # low_memory=False pour éviter les dtypes cassés sur gros CSV
+                df = pd.read_csv(RECIPES_URL, low_memory=False)
+                logger.info("Recettes chargées depuis Hugging Face ✅")
+                return df
+            except Exception:
+                logger.exception(
+                    "Lecture via URL des recettes a échoué, essai en local…"
+                )
+        # fallback local
         path = self.data_path / file
-        try:
-            df = pd.read_csv(path)
-            logger.info(f"Données chargées avec succès depuis {path}.")
-        except FileNotFoundError:
-            logger.error(
-                f"Erreur : fichier non disponible au chemin {path} spéficié.",
-                exc_info=True,
-            )
-        except pd.errors.EmptyDataError:
-            logger.warning("Attention: le fichier est vide.")
+        df = pd.read_csv(path, low_memory=False)
+        logger.info(f"Recettes chargées depuis {path} ✅")
         return df
 
     def load_interactions(self, file: str = "RAW_interactions.csv") -> pd.DataFrame:
-        """
-        Charge les interactions (avis) depuis un fichier CSV.
-
-        Args:
-            path (str): chemin vers le fichier CSV
-
-        Returns:
-            pd.DataFrame: DataFrame contenant les interactions
-
-        Raises:
-            FileNotFoundError si le fichier n'est pas trouvé au chemin spécifié.
-            EmptyDataError si le fichier est vide.
-        """
+        """Charge les interactions (URL HF en priorité, sinon local)."""
+        if READ_FROM_URLS_FIRST:
+            try:
+                logger.info(
+                    f"Téléchargement interactions depuis URL: {INTERACTIONS_URL}"
+                )
+                df = pd.read_csv(INTERACTIONS_URL, low_memory=False)
+                logger.info("Interactions chargées depuis Hugging Face ✅")
+                return df
+            except Exception:
+                logger.exception(
+                    "Lecture via URL des interactions a échoué, essai en local…"
+                )
+        # fallback local
         path = self.data_path / file
-        try:
-            df = pd.read_csv(path)
-            logger.info(f"Données chargées avec succès depuis {path}.")
-        except FileNotFoundError:
-            logger.error(
-                f"Erreur : fichier non disponible au chemin {path} spéficié.",
-                exc_info=True,
-            )
-        except pd.errors.EmptyDataError:
-            logger.warning("Attention: le fichier est vide.")
+        df = pd.read_csv(path, low_memory=False)
+        logger.info(f"Interactions chargées depuis {path} ✅")
         return df
