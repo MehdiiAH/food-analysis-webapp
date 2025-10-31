@@ -39,9 +39,7 @@ def show_recipe_ratings_page(
 
     # Afficher un message si une recherche est en cours
     if search_query and search_query.strip():
-        st.info(
-            f"🔍 Recherche en cours pour : **{search_query}**"
-        )
+        st.info(f"🔍 Recherche en cours pour : **{search_query}**")
 
     st.markdown("---")
 
