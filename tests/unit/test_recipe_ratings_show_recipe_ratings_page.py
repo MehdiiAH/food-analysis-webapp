@@ -1,14 +1,14 @@
-import pytest
+from unittest.mock import MagicMock, patch
+
 import pandas as pd
-from unittest.mock import patch, MagicMock
+import pytest
+
 from food_analysis.pages import recipe_ratings
 
 
 @pytest.fixture
 def recipe_df():
-    return pd.DataFrame(
-        {"id": [1, 2, 3], "name": ["Pizza", "Burger", "Salade"]}
-    )
+    return pd.DataFrame({"id": [1, 2, 3], "name": ["Pizza", "Burger", "Salade"]})
 
 
 @pytest.fixture
@@ -97,4 +97,4 @@ def test_show_recipe_ratings_page_no_selection(
         recipe_ratings.show_recipe_ratings_page(recipe_df, interaction_df)
 
     mock_compute.assert_called_once()
-    mock_show_details.assert_called_once() 
+    mock_show_details.assert_called_once()
