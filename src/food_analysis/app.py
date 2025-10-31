@@ -21,7 +21,6 @@ def main() -> None:
 
     # Titre principal
     st.title("🍳 Food.com - Analyse de Données")
-    st.markdown("**Version:** 0.1.0")
     st.markdown("---")
 
     # === CHARGEMENT DES DONNÉES ===
@@ -131,6 +130,11 @@ def show_about_page() -> None:
     - [Documentation](https://github.com/MehdiiAH/food-analysis-webapp)
 
     ### 👥 Équipe
+    - AIT HAMMA Mehdi
+    - ELWARADI Reda
+    - HAMON Rémi
+    - HORDOIR Stéphane
+    - NIOL Julien
 
     Projet développé en équipe.
     """)

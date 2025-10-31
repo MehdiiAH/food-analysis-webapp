@@ -19,6 +19,30 @@ def show_recipe_ratings_page(
     """
     st.header("🏆 Recettes les Mieux Notées")
 
+    # === BARRE DE RECHERCHE ===
+    st.subheader("🔍 Recherche Intelligente")
+
+    col_search, col_clear = st.columns([4, 1])
+
+    with col_search:
+        search_query = st.text_input(
+            "Rechercher une recette",
+            placeholder="Ex: Fajitas with guacamole",
+            label_visibility="collapsed",
+            key="search_recipe",
+        )
+
+    with col_clear:
+        if st.button("🔄 Réinitialiser", use_container_width=True):
+            st.session_state.search_recipe = ""
+            st.rerun()
+
+    # Afficher un message si une recherche est en cours
+    if search_query and search_query.strip():
+        st.info(f"🔍 Recherche en cours pour : **{search_query}**")
+
+    st.markdown("---")
+
     # === SIDEBAR : Filtres ===
     with st.sidebar:
         st.subheader("⚙️ Paramètres")
@@ -49,6 +73,11 @@ def show_recipe_ratings_page(
         if recipe_stats.empty or "weighted_rating" not in recipe_stats.columns:
             st.error("Impossible de calculer les statistiques de recette.")
             return
+
+        if search_query and search_query.strip():
+            recipe_stats = recipe_stats.sample(frac=1, random_state=None).reset_index(
+                drop=True
+            )
 
         # Garder seulement les N premières
         top_recipes = recipe_stats.head(n_recipes)
@@ -267,12 +296,16 @@ def show_recipe_details(
 
             with col2:
                 # Nombre d'avis à afficher
+                # Adapter min_value et value au nombre d'avis disponibles
+                min_reviews = min(5, len(reviews))
+                default_reviews = min(10, len(reviews))
+
                 n_reviews_to_show = st.number_input(
                     "Nombre d'avis à afficher",
-                    min_value=5,
+                    min_value=min_reviews,
                     max_value=len(reviews),
-                    value=min(10, len(reviews)),
-                    step=5,
+                    value=default_reviews,
+                    step=min(5, len(reviews)),
                     key=f"n_reviews_{recipe_id}",
                 )
 
