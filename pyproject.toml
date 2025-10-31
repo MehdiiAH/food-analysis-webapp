@@ -2,9 +2,6 @@
 name = "food-analysis-webapp"
 version = "0.1.0"
 description = "Application web d'analyse de données de recettes Food.com"
-authors = [
-    {name = "Votre Équipe", email = "votre.email@example.com"}
-]
 readme = "README.md"
 requires-python = ">=3.11,<3.14"
 license = {text = "MIT"}
@@ -95,4 +92,6 @@ exclude_lines = [
 ]
 
 [tool.poetry]
-package-mode = false
+packages = [
+  { include = "food_analysis", from = "src" }
+]
