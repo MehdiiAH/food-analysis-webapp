@@ -50,7 +50,7 @@ def test_show_recipe_ratings_page_basic(
     with patch("food_analysis.pages.recipe_ratings.st") as mock_st:
         mock_st.slider.return_value = 10
         mock_st.dataframe.return_value.selection.rows = [0]
-        mock_st.columns.return_value = [MagicMock(), MagicMock()]
+        mock_st.columns.return_value = [MagicMock(), MagicMock(), MagicMock(), MagicMock()]
         mock_st.spinner.__enter__.return_value = None
         mock_st.spinner.__exit__.return_value = None
 
@@ -70,7 +70,7 @@ def test_show_recipe_ratings_page_no_selection(
     with patch("food_analysis.pages.recipe_ratings.st") as mock_st:
         mock_st.slider.return_value = 10
         mock_st.dataframe.return_value.selection.rows = []
-        mock_st.columns.return_value = [MagicMock(), MagicMock()]
+        mock_st.columns.return_value = [MagicMock(), MagicMock(), MagicMock(), MagicMock()]
         mock_st.spinner.__enter__.return_value = None
         mock_st.spinner.__exit__.return_value = None
 
