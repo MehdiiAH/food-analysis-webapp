@@ -286,7 +286,7 @@ def show_recipe_details(
 
             with col1:
                 # Filtre par note
-                rating_filter = st.multiselect(
+                rating_filter: list[int] = st.multiselect(
                     "Filtrer par note",
                     options=[5, 4, 3, 2, 1, 0],
                     default=[5, 4, 3, 2, 1, 0],
