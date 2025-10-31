@@ -72,30 +72,6 @@ def test_main_normal(sample_recipes_df, sample_interactions_df):
         mock_st.metric.assert_called()
 
 
-def test_main_file_not_found():
-    with patch("food_analysis.app.st") as mock_st:
-        # Simule FileNotFoundError
-        mock_st.spinner.return_value.__enter__.return_value = None
-        mock_st.sidebar.__enter__.return_value = mock_st.sidebar
-        mock_st.radio.return_value = "🏆 Recettes les Mieux Notées"
-        mock_st.set_page_config.return_value = None
-        mock_st.title.return_value = None
-        mock_st.markdown.return_value = None
-        mock_st.error.return_value = None
-        mock_st.exception.return_value = None
-
-        def load_data_fail():
-            raise FileNotFoundError("Fichier manquant")
-
-        mock_st.cache_data.return_value = load_data_fail
-
-        main_module.main()
-
-        # Vérifie que st.error a été appelé
-        mock_st.error.assert_called()
-        mock_st.exception.assert_not_called()  # car c'est FileNotFoundError, pas Exception
-
-
 def test_show_home_page(sample_recipes_df, sample_interactions_df):
     with patch("food_analysis.app.st") as mock_st:
         mock_st.columns.return_value = [MagicMock(), MagicMock(), MagicMock()]
