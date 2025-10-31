@@ -1,162 +1,217 @@
+# src/food_analysis/core/data_loader.py
 """
-DataLoader — optimisé (RAM) et compatible mypy
-- Lecture depuis Hugging Face (URLs publiques)
-- Cache parquet en /tmp
-- Colonnes et dtypes réduits
-- Colonne `review` incluse
+Data loading and preprocessing module.
+
+- Lit les CSV publics hébergés sur Hugging Face (URLs hardcodées).
+- Réduit l'empreinte mémoire (usecols + dtypes downcast).
+- Met en cache en Parquet dans /tmp pour éviter de reparser à chaque run.
+- Compatible mypy (annotations et casts).
 """
 
 from __future__ import annotations
 
-import io
 import logging
-import tempfile
+from logging.handlers import RotatingFileHandler
 from pathlib import Path
-from typing import Optional
+from typing import Dict, List, Optional, cast
 
 import pandas as pd
-import requests  # type: ignore[import-untyped]
+
+# ------------------ CONFIG URLs (hardcodées) ------------------
+_HF_BASE = "https://huggingface.co/datasets/MehdiiAH/mangetamain/resolve/main/"
+RECIPES_URL: str = (
+    _HF_BASE + "RAW_recipes.csv"
+)  # ou ".csv.gz" si tu compresse plus tard
+INTERACTIONS_URL: str = _HF_BASE + "RAW_interactions.csv"
+READ_FROM_URLS_FIRST: bool = True
+
+# ------------------ Parquet cache local ------------------
+PARQUET_DIR: Path = Path("/tmp/food_cache")
+RECIPES_PARQUET: Path = PARQUET_DIR / "recipes.parquet"
+INTER_PARQUET: Path = PARQUET_DIR / "interactions.parquet"
+
+PARQUET_ENGINE: str = "pyarrow"
+
+# ------------------ Colonnes minimales + dtypes downcast ------------------
+RECIPES_USECOLS: List[str] = [
+    "id",
+    "name",
+    "minutes",
+    "contributor_id",
+    "submitted",
+    "n_steps",
+    "n_ingredients",
+]
+RECIPES_DTYPES: Dict[str, str] = {
+    "id": "int32",
+    "minutes": "int32",  # int16 peut overflow si valeurs extrêmes
+    "contributor_id": "int32",
+    "n_steps": "int16",
+    "n_ingredients": "int8",
+    # "name": string (traité après), "submitted": datetime
+}
+
+INTER_USECOLS: List[str] = ["user_id", "recipe_id", "rating", "date"]
+INTER_DTYPES: Dict[str, str] = {
+    "user_id": "int64",
+    "recipe_id": "int32",
+    "rating": "int8",
+    # "date": datetime
+}
+
+# ------------------ LOGGING identique ------------------
+logging.debug("Ceci est un message de niveau DEBUG")
+logging.info("Ceci est un message de niveau INFO")
+logging.warning("Ceci est un message de niveau WARNING")
+logging.error("Ceci est un message de niveau ERROR")
+logging.critical("Ceci est un message de niveau CRITICAL")
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-# === URLs Hugging Face (constantes) ===
-_HF_BASE: str = "https://huggingface.co/datasets/MehdiiAH/mangetamain/resolve/main/"
-RECIPES_URL: str = f"{_HF_BASE}RAW_recipes.csv"
-INTERACTIONS_URL: str = f"{_HF_BASE}RAW_interactions.csv"
+file_handler = RotatingFileHandler(
+    "data_loader.log", maxBytes=5 * 1024 * 1024, backupCount=5, encoding="utf-8"
+)
+file_handler.setLevel(logging.INFO)
+handler_format = logging.Formatter(
+    "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+file_handler.setFormatter(handler_format)
 
-# === Colonnes / dtypes (RAM-friendly) ===
-RECIPES_USECOLS: list[str] = [
-    "name",
-    "id",
-    "minutes",
-    "contributor_id",
-    "submitted",
-    "tags",
-    "nutrition",
-    "n_steps",
-    "steps",
-    "description",
-    "ingredients",
-    "n_ingredients",
-]
-RECIPES_DTYPES: dict[str, str] = {
-    "name": "string",
-    "id": "int32",
-    "minutes": "int32",
-    "contributor_id": "int32",
-    "tags": "string",
-    "nutrition": "string",
-    "n_steps": "int16",
-    "steps": "string",
-    "description": "string",
-    "ingredients": "string",
-    "n_ingredients": "int16",
-}
+console_handler = logging.StreamHandler()
+console_handler.setFormatter(handler_format)
+console_handler.setLevel(logging.INFO)
 
-# IMPORTANT: review incluse
-INTER_USECOLS: list[str] = ["user_id", "recipe_id", "rating", "date", "review"]
-INTER_DTYPES: dict[str, str] = {
-    "user_id": "int64",
-    "recipe_id": "int32",
-    "rating": "int8",
-    "review": "string",
-}
+if not logger.handlers:
+    logger.addHandler(file_handler)
+    logger.addHandler(console_handler)
+
+
+def _ensure_parquet_dir() -> None:
+    """Crée le dossier cache parquet si besoin."""
+    PARQUET_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def _read_recipes_from_url() -> pd.DataFrame:
+    """Lit les recettes depuis l'URL HF (CSV) avec options RAM-friendly."""
+    logger.info(f"Téléchargement recettes depuis URL: {RECIPES_URL}")
+    df: pd.DataFrame = pd.read_csv(
+        RECIPES_URL,
+        usecols=RECIPES_USECOLS,
+        dtype=RECIPES_DTYPES,
+        parse_dates=["submitted"],
+        date_format="mixed",  # pandas >=2.0
+        low_memory=True,
+    )
+    # string dtype moderne (compact + évite object)
+    df["name"] = df["name"].astype("string")
+    return df
+
+
+def _read_interactions_from_url() -> pd.DataFrame:
+    """Lit les interactions depuis l'URL HF (CSV) avec options RAM-friendly."""
+    logger.info(f"Téléchargement interactions depuis URL: {INTERACTIONS_URL}")
+    df: pd.DataFrame = pd.read_csv(
+        INTERACTIONS_URL,
+        usecols=INTER_USECOLS,
+        dtype=INTER_DTYPES,
+        parse_dates=["date"],
+        date_format="mixed",
+        low_memory=True,
+    )
+    return df
 
 
 class DataLoader:
-    """Gestion centralisée du chargement des datasets."""
+    """Charge les données Food.com depuis HF (hardcodé) + cache parquet local /tmp, sinon fallback local."""
 
-    def __init__(self, data_path: Optional[str] = None) -> None:
-        # Dossier cache (parquet) — /tmp par défaut, compatible Streamlit Cloud
-        base: str = data_path if data_path is not None else tempfile.gettempdir()
-        self._cache_dir: Path = Path(base) / "food_cache"
-        self._cache_dir.mkdir(parents=True, exist_ok=True)
+    def __init__(self, data_path: Optional[Path] = None) -> None:
+        self.data_path: Path = Path("data/raw") if data_path is None else data_path
+        _ensure_parquet_dir()
 
-    # ------------------ utilitaires cache ------------------
-
-    def _cache_path(self, stem: str) -> Path:
-        """Chemin du fichier parquet de cache."""
-        return self._cache_dir / f"{stem}.parquet"
-
-    def _load_parquet(self, stem: str) -> Optional[pd.DataFrame]:
-        path = self._cache_path(stem)
-        if path.exists():
+    # --- API publique ---
+    def load_recipes(self, file: str = "RAW_recipes.csv") -> pd.DataFrame:
+        """Charge le DataFrame des recettes (parquet cache -> URL HF -> local)."""
+        # 1) Parquet local si dispo (évite reparse CSV)
+        if RECIPES_PARQUET.exists():
             try:
-                df = pd.read_parquet(path)
-                logger.info("✅ Chargé depuis cache : %s", path)
+                df = cast(
+                    pd.DataFrame,
+                    pd.read_parquet(RECIPES_PARQUET, engine=PARQUET_ENGINE),
+                )
                 return df
-            except Exception as e:  # pragma: no cover — robustesse
-                logger.warning("Cache corrompu (%s), suppression. Raison: %s", path, e)
+            except Exception:
+                logger.exception(
+                    "Lecture Parquet recipes échouée, on retente via URL/local…"
+                )
+
+        # 2) URL HF
+        if READ_FROM_URLS_FIRST:
+            try:
+                df = _read_recipes_from_url()
                 try:
-                    path.unlink()
+                    df.to_parquet(RECIPES_PARQUET, engine=PARQUET_ENGINE, index=False)
                 except Exception:
-                    pass
-        return None
+                    logger.warning(
+                        "Impossible d'écrire le cache Parquet recipes (non bloquant)."
+                    )
+                logger.info("Recettes chargées depuis Hugging Face ✅")
+                return df
+            except Exception:
+                logger.exception(
+                    "Lecture via URL des recettes a échoué, essai en local…"
+                )
 
-    def _save_parquet(self, stem: str, df: pd.DataFrame) -> None:
-        path = self._cache_path(stem)
-        try:
-            df.to_parquet(path, index=False)
-            logger.info("💾 Cache enregistré : %s", path)
-        except Exception as e:  # pragma: no cover — non bloquant
-            logger.warning("Impossible d'écrire le cache (%s): %s", path, e)
-
-    # ------------------ téléchargements ------------------
-
-    @staticmethod
-    def _http_get_bytes(url: str, timeout: int) -> bytes:
-        """Télécharge une ressource et renvoie son contenu binaire (pour BytesIO)."""
-        resp = requests.get(url, timeout=timeout)  # type: ignore[no-untyped-call]
-        resp.raise_for_status()
-        return resp.content
-
-    # ------------------ API publique ------------------
-
-    def load_recipes(self) -> pd.DataFrame:
-        """Charge les recettes (HF → cache parquet)."""
-        cache_stem = "RAW_recipes"
-        cached = self._load_parquet(cache_stem)
-        if cached is not None:
-            return cached
-
-        logger.info("Téléchargement recettes depuis URL: %s", RECIPES_URL)
-        data: bytes = self._http_get_bytes(RECIPES_URL, timeout=60)
-
-        df = pd.read_csv(
-            io.BytesIO(data),
+        # 3) Fallback local minimal
+        path = self.data_path / file
+        df_local: pd.DataFrame = pd.read_csv(
+            path,
             usecols=RECIPES_USECOLS,
             dtype=RECIPES_DTYPES,
             parse_dates=["submitted"],
-            infer_datetime_format=True,
+            date_format="mixed",
             low_memory=True,
         )
-        logger.info("Recettes chargées depuis Hugging Face ✅")
+        logger.info(f"Recettes chargées depuis {path} ✅")
+        return df_local
 
-        self._save_parquet(cache_stem, df)
-        return df
+    def load_interactions(self, file: str = "RAW_interactions.csv") -> pd.DataFrame:
+        """Charge le DataFrame des interactions (parquet cache -> URL HF -> local)."""
+        if INTER_PARQUET.exists():
+            try:
+                df = cast(
+                    pd.DataFrame, pd.read_parquet(INTER_PARQUET, engine=PARQUET_ENGINE)
+                )
+                return df
+            except Exception:
+                logger.exception(
+                    "Lecture Parquet interactions échouée, on retente via URL/local…"
+                )
 
-    def load_interactions(self) -> pd.DataFrame:
-        """Charge les interactions (HF → cache parquet)."""
-        cache_stem = "RAW_interactions"
-        cached = self._load_parquet(cache_stem)
-        if cached is not None:
-            return cached
+        if READ_FROM_URLS_FIRST:
+            try:
+                df = _read_interactions_from_url()
+                try:
+                    df.to_parquet(INTER_PARQUET, engine=PARQUET_ENGINE, index=False)
+                except Exception:
+                    logger.warning(
+                        "Impossible d'écrire le cache Parquet interactions (non bloquant)."
+                    )
+                logger.info("Interactions chargées depuis Hugging Face ✅")
+                return df
+            except Exception:
+                logger.exception(
+                    "Lecture via URL des interactions a échoué, essai en local…"
+                )
 
-        logger.info("Téléchargement interactions depuis URL: %s", INTERACTIONS_URL)
-        data: bytes = self._http_get_bytes(INTERACTIONS_URL, timeout=90)
-
-        df = pd.read_csv(
-            io.BytesIO(data),
+        path = self.data_path / file
+        df_local: pd.DataFrame = pd.read_csv(
+            path,
             usecols=INTER_USECOLS,
             dtype=INTER_DTYPES,
             parse_dates=["date"],
-            infer_datetime_format=True,
+            date_format="mixed",
             low_memory=True,
         )
-        df["review"] = df["review"].astype("string").str.slice(0, 800)
-
-        logger.info("Interactions chargées depuis Hugging Face ✅")
-
-        self._save_parquet(cache_stem, df)
-        return df
+        logger.info(f"Interactions chargées depuis {path} ✅")
+        return df_local
