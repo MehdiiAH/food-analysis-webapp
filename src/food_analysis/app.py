@@ -10,6 +10,16 @@ from food_analysis.pages.recipe_ratings import show_recipe_ratings_page
 from food_analysis.pages.visualizations import show_visualization_page
 
 
+# === CHARGEMENT DES DONNÉES (cache global) ===
+@st.cache_data(ttl=3600)  # 1h : évite les re-download/reparse
+def load_data() -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """Charge les données depuis Hugging Face (ou local fallback via DataLoader)."""
+    loader = DataLoader()
+    recipes = loader.load_recipes()
+    interactions = loader.load_interactions()
+    return recipes, interactions
+
+
 def main() -> None:
     """Point d'entrée principal de l'application."""
     # Configuration de la page
@@ -23,15 +33,6 @@ def main() -> None:
     # Titre principal
     st.title("🍳 Food.com - Analyse de Données")
     st.markdown("---")
-
-    # === CHARGEMENT DES DONNÉES ===
-    @st.cache_data
-    def load_data() -> Tuple[pd.DataFrame, pd.DataFrame]:
-        """Charge les données depuis les CSV."""
-        loader = DataLoader()
-        recipes = loader.load_recipes()
-        interactions = loader.load_interactions()
-        return recipes, interactions
 
     try:
         with st.spinner("Chargement des données..."):
@@ -54,6 +55,7 @@ def main() -> None:
 
             st.markdown("---")
             st.markdown("### 📊 Informations")
+            # width='stretch' remplace use_container_width (déprécié)
             st.metric("Nombre de recettes", f"{len(recipes_df):,}")
             st.metric("Nombre d'interactions", f"{len(interactions_df):,}")
 
@@ -71,7 +73,8 @@ def main() -> None:
             show_about_page()
 
     except FileNotFoundError as e:
-        st.error(f"""
+        st.error(
+            f"""
         ❌ **Erreur : Fichiers de données non trouvés**
 
         {str(e)}
@@ -81,7 +84,8 @@ def main() -> None:
         - RAW_interactions.csv
 
         [Télécharger les données](https://www.kaggle.com/datasets/shuyangli94/food-com-recipes-and-user-interactions)
-        """)
+        """
+        )
 
     except Exception as e:
         st.error(f"❌ Une erreur est survenue : {str(e)}")
@@ -92,7 +96,8 @@ def show_home_page(recipes_df: pd.DataFrame, interactions_df: pd.DataFrame) -> N
     """Affiche la page d'accueil."""
     st.header("Bienvenue sur l'application d'analyse Food.com")
 
-    st.markdown("""
+    st.markdown(
+        """
     ### 🎯 Objectif du projet
 
     Cette application permet d'explorer et d'analyser les données de recettes
@@ -105,7 +110,8 @@ def show_home_page(recipes_df: pd.DataFrame, interactions_df: pd.DataFrame) -> N
     ### 🚀 Comment utiliser
 
     Utilisez le menu de navigation à gauche pour explorer les différentes sections.
-    """)
+    """
+    )
 
     # Quelques statistiques rapides
     col1, col2, col3 = st.columns(3)
@@ -127,7 +133,8 @@ def show_about_page() -> None:
     """Affiche la page À propos."""
     st.header("ℹ️ À propos")
 
-    st.markdown("""
+    st.markdown(
+        """
     ### 📚 À propos du projet
 
     Ce projet a été développé dans le cadre d'un cours sur le développement
@@ -146,7 +153,8 @@ def show_about_page() -> None:
     - HAMON Rémi
     - HORDOIR Stéphane
     - NIOL Julien
-    """)
+    """
+    )
 
 
 if __name__ == "__main__":
