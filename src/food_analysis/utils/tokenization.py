@@ -3,9 +3,9 @@ The module contains functions to tokenize the recipe dataframe
 """
 
 import logging
+import subprocess
 from logging.handlers import RotatingFileHandler
 from typing import Iterable, List, Set, Tuple
-import subprocess
 
 import pandas as pd
 import spacy
@@ -40,6 +40,7 @@ if not logger.handlers:
     logger.addHandler(file_handler)
     logger.addHandler(console_handler)
 
+
 # ----------------------
 # SpaCy Model Loader
 # ----------------------
@@ -52,11 +53,15 @@ def load_spacy_model():
         return spacy.load("en_core_web_sm", disable=["ner"])
     except OSError:
         logger.info("Modèle en_core_web_sm manquant, téléchargement en cours...")
-        subprocess.run(["python", "-m", "spacy", "download", "en_core_web_sm"], check=True)
+        subprocess.run(
+            ["python", "-m", "spacy", "download", "en_core_web_sm"], check=True
+        )
         return spacy.load("en_core_web_sm", disable=["ner"])
+
 
 # Charger une seule fois le modèle
 nlp_model = load_spacy_model()
+
 
 # ----------------------
 # Fonctions principales
@@ -82,6 +87,7 @@ def extract_text_from_df(df: pd.DataFrame) -> pd.DataFrame:
     logger.info("Name and description extracted from dataframe")
     return data_text
 
+
 def extract_tokens_from_df(df: pd.DataFrame) -> Tuple[Iterable[Doc], Set[str]]:
     stopwords = {w.lower() for w in nlp_model.Defaults.stop_words}
 
@@ -96,6 +102,7 @@ def extract_tokens_from_df(df: pd.DataFrame) -> Tuple[Iterable[Doc], Set[str]]:
 
     return docs, stopwords
 
+
 def extract_tokens_from_doc(doc: Doc, stopwords: Set[str]) -> List[str]:
     return [
         token.lemma_.lower()
@@ -105,7 +112,10 @@ def extract_tokens_from_doc(doc: Doc, stopwords: Set[str]) -> List[str]:
         and token.lemma_.lower() not in stopwords
     ]
 
-def store_tokens_in_df(docs: Iterable[Doc], stopwords: Set[str], df: pd.DataFrame) -> pd.DataFrame:
+
+def store_tokens_in_df(
+    docs: Iterable[Doc], stopwords: Set[str], df: pd.DataFrame
+) -> pd.DataFrame:
     tokens_extracted = [extract_tokens_from_doc(doc, stopwords) for doc in docs]
     logger.info("Tokens extracted")
 
@@ -121,6 +131,7 @@ def store_tokens_in_df(docs: Iterable[Doc], stopwords: Set[str], df: pd.DataFram
     df.loc[df.index, "tokens"] = tokens_series
     logger.info("Tokens stored in dataframe")
     return df
+
 
 def extract_tokens_from_string(query_text: str) -> List[str]:
     if not query_text:
