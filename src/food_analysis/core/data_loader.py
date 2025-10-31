@@ -102,7 +102,7 @@ def _read_recipes_from_url() -> pd.DataFrame:
     df: pd.DataFrame = pd.read_csv(
         RECIPES_URL,
         usecols=RECIPES_USECOLS,
-        dtype=cast(Mapping[str, DtypeArg], RECIPES_DTYPES),
+        dtype=cast(Mapping[str, DtypeArg], RECIPES_DTYPES),  # type: ignore[arg-type]
         parse_dates=["submitted"],
         date_format="mixed",  # pandas >=2.0
         low_memory=True,
@@ -118,7 +118,7 @@ def _read_interactions_from_url() -> pd.DataFrame:
     df: pd.DataFrame = pd.read_csv(
         INTERACTIONS_URL,
         usecols=INTER_USECOLS,
-        dtype=cast(Mapping[str, DtypeArg], INTER_DTYPES),
+        dtype=cast(Mapping[str, DtypeArg], INTER_DTYPES),  # type: ignore[arg-type]
         parse_dates=["date"],
         date_format="mixed",
         low_memory=True,
@@ -175,7 +175,7 @@ class DataLoader:
         df_local: pd.DataFrame = pd.read_csv(
             path,
             usecols=RECIPES_USECOLS,
-            dtype=cast(Mapping[str, DtypeArg], RECIPES_DTYPES),
+            dtype=cast(Mapping[str, DtypeArg], RECIPES_DTYPES),  # type: ignore[arg-type]
             parse_dates=["submitted"],
             date_format="mixed",
             low_memory=True,
@@ -219,7 +219,7 @@ class DataLoader:
         df_local: pd.DataFrame = pd.read_csv(
             path,
             usecols=INTER_USECOLS,
-            dtype=cast(Mapping[str, DtypeArg], INTER_DTYPES),
+            dtype=cast(Mapping[str, DtypeArg], INTER_DTYPES),  # type: ignore[arg-type]
             parse_dates=["date"],
             date_format="mixed",
             low_memory=True,
