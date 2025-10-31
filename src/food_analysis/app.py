@@ -7,6 +7,7 @@ import streamlit as st
 
 from food_analysis.core.data_loader import DataLoader
 from food_analysis.pages.recipe_ratings import show_recipe_ratings_page
+from food_analysis.pages.visualizations import show_visualization_page
 
 
 def main() -> None:
@@ -21,7 +22,6 @@ def main() -> None:
 
     # Titre principal
     st.title("🍳 Food.com - Analyse de Données")
-    st.markdown("**Version:** 0.1.0")
     st.markdown("---")
 
     # === CHARGEMENT DES DONNÉES ===
@@ -43,7 +43,12 @@ def main() -> None:
 
             page: str = st.radio(
                 "Sélectionnez une page :",
-                ["🏠 Accueil", "🏆 Recettes les Mieux Notées", "ℹ️ À propos"],
+                [
+                    "🏠 Accueil",
+                    "🏆 Recettes les Mieux Notées",
+                    "📈 Visualisation des Utilisateurs",
+                    "ℹ️ À propos",
+                ],
                 index=0,
             )
 
@@ -58,6 +63,9 @@ def main() -> None:
 
         elif page == "🏆 Recettes les Mieux Notées":
             show_recipe_ratings_page(recipes_df, interactions_df)
+
+        elif page == "📈 Visualisation des Utilisateurs":
+            show_visualization_page(recipes_df, interactions_df)
 
         else:  # À propos
             show_about_page()
@@ -132,7 +140,12 @@ def show_about_page() -> None:
 
     ### 👥 Équipe
 
-    Projet développé en équipe.
+    Projet développé par :
+    - AIT HAMMA Mehdi
+    - ELWARADI Reda
+    - HAMON Rémi
+    - HORDOIR Stéphane
+    - NIOL Julien
     """)
 
 

@@ -11,7 +11,6 @@ Ce projet est une application web d'analyse de données développée avec Stream
 - 📊 Visualisation interactive des données
 - 🔍 Analyse exploratoire des recettes
 - 👥 Analyse des interactions utilisateurs
-- 📈 Statistiques et tendances
 
 ## 🚀 Installation
 
@@ -37,11 +36,6 @@ uv pip install -e ".[dev]"
 # Copier le fichier d'environnement
 cp .env.example .env
 ```
-
-### Téléchargement des données
-
-1. Téléchargez le dataset depuis [Kaggle](https://www.kaggle.com/datasets/shuyangli94/food-com-recipes-and-user-interactions)
-2. Placez les fichiers CSV dans le dossier `data/raw/`
 
 ## 💻 Utilisation
 
@@ -84,7 +78,7 @@ food-analysis-webapp/
 │   └── pages/            # Pages Streamlit
 ├── tests/                # Tests unitaires et d'intégration
 ├── data/                 # Données (non versionnées)
-├── docs/                 # Documentation Sphinx
+├── docs/                 # Documentation
 └── .github/workflows/    # CI/CD GitHub Actions
 ```
 
@@ -137,10 +131,6 @@ pytest --cov
 - Ajouter des tests pour les nouvelles fonctionnalités
 - Documenter le code (docstrings)
 - Utiliser le type hinting
-
-## 📚 Documentation
-
-La documentation complète est disponible dans le dossier `docs/` et peut être générée avec Sphinx.
 
 ## 👥 Équipe
 
