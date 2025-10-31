@@ -41,7 +41,7 @@ def main() -> None:
         with st.sidebar:
             st.header("🧭 Navigation")
 
-            page = st.radio(
+            page: str = st.radio(
                 "Sélectionnez une page :",
                 ["🏠 Accueil", "🏆 Recettes les Mieux Notées", "ℹ️ À propos"],
                 index=0,
